@@ -10,12 +10,12 @@ import CoreData
 
 @main
 struct SpendLiteApp: App {
-    let persistenceController = PersistenceController.shared
+    private let container = AppContainer(inMemory: false) // production
 
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                .environment(\.container, container)
         }
     }
 }
