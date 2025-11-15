@@ -14,7 +14,7 @@ struct SpendLiteApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            TabShellView()
                 .environment(\.container, container)
         }
     }
