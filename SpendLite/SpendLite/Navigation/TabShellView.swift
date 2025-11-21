@@ -15,8 +15,7 @@ struct TabShellView: View {
                 title: "Home",
                 systemImage: "house.fill",
                 navTitle: "SpendLite") {
-                    Text("Home")
-                        .font(.title)
+                    HomeScreen()
                 }
             
             // Add expense
