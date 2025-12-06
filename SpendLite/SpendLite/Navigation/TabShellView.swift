@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct TabShellView: View {
+    @Environment(\.container) private var container
     var body: some View {
         TabView {
             // Home
@@ -15,7 +16,8 @@ struct TabShellView: View {
                 title: "Home",
                 systemImage: "house.fill",
                 navTitle: "SpendLite") {
-                    HomeScreen()
+                    let vm = HomeViewModel(expenses: container.expenses)
+                    HomeScreen(viewModel: vm)
                 }
             
             // Add expense
