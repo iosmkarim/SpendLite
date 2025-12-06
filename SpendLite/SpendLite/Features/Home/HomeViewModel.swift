@@ -14,10 +14,12 @@ final class HomeViewModel: ObservableObject {
     
     @Published var hasAnyExpense: Bool = false
     
+    private let expenses: ExpenseRepository
     private var cacellables = Set<AnyCancellable>()
     
-    init() {
-        simulateFirstLaunch()
+    init(expenses: ExpenseRepository) {
+        self.expenses = expenses
+        observeHasAnyExpense()
     }
     
     // MARK: - Intent
@@ -28,7 +30,14 @@ final class HomeViewModel: ObservableObject {
     
     // MARK: - Private
     
-    private func simulateFirstLaunch() {
-        hasAnyExpense = false 
+    private func observeHasAnyExpense() {
+        expenses
+            .hasAnyExpense()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] hasAny in
+                self?.hasAnyExpense = hasAny
+                
+            }
+            .store(in: &cacellables)
     }
 }

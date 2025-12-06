@@ -9,8 +9,7 @@ import SwiftUI
 
 struct HomeScreen: View {
     
-    @Environment(\.container) private var container
-    @StateObject private var viewModel = HomeViewModel()
+    @ObservedObject var viewModel : HomeViewModel
     
     var body: some View {
         Group {
@@ -80,5 +79,5 @@ struct HomeScreen: View {
 }
 
 #Preview {
-    HomeScreen()
+    HomeScreen(viewModel: )
 }
