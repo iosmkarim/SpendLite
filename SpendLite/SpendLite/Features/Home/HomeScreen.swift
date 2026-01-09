@@ -9,7 +9,11 @@ import SwiftUI
 
 struct HomeScreen: View {
     
-    @ObservedObject var viewModel : HomeViewModel
+    @StateObject var viewModel : HomeViewModel
+    
+    init(expense: ExpenseRepository) {
+        _viewModel = StateObject(wrappedValue: HomeViewModel(expenses: expense))
+    }
     
     var body: some View {
         Group {
@@ -66,6 +70,7 @@ struct HomeScreen: View {
             
             Button {
                 // later: load samle data
+                viewModel.addSampleData()
             } label: {
                 Text("Add sample data")
                     .font(.subheadline)
@@ -79,5 +84,5 @@ struct HomeScreen: View {
 }
 
 #Preview {
-    HomeScreen(viewModel: )
+    HomeScreen(expense: AppContainer(inMemory: true).expenses)
 }

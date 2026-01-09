@@ -16,8 +16,7 @@ struct TabShellView: View {
                 title: "Home",
                 systemImage: "house.fill",
                 navTitle: "SpendLite") {
-                    let vm = HomeViewModel(expenses: container.expenses)
-                    HomeScreen(viewModel: vm)
+                    HomeScreen(expense: container.expenses)
                 }
             
             // Add expense
