@@ -6,6 +6,7 @@
 //
 
 import CoreData
+import CoreTransferable
 
 struct PersistenceController {
     static let shared = PersistenceController()
@@ -15,8 +16,11 @@ struct PersistenceController {
         let result = PersistenceController(inMemory: true)
         let viewContext = result.container.viewContext
         for _ in 0..<10 {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
+            let newExpense = Expense(context: viewContext)
+            newExpense.date = Date()
+            newExpense.title = "Sample Coffee"
+            newExpense.amount = -5.40
+            newExpense.category = "Food"
         }
         do {
             try viewContext.save()
