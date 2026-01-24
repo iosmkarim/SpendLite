@@ -9,7 +9,10 @@ import Foundation
 import Combine
 
 protocol ExpenseRepository {
-    /// Publishes true if there is at least one expense in storage. 
+    /// emit the full list whenever storage changes.
+    var expensesPublisher: AnyPublisher<[ExpenseItem], Never> { get }
+    
+    /// Publishes true if there is at least one expense in storage.
     func hasAnyExpense() -> AnyPublisher<Bool, Never>
     
     /// Inserts a small sample expense for development/testing.
