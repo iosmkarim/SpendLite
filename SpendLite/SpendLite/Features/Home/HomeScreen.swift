@@ -204,6 +204,7 @@ private struct HeaderSectionView: View {
                 
                 Text("👋")
                     .font(.title)
+                    .accessibilityHidden(true) // decorative; VoiceOver would read "waving hand"
             }
             
             Text(subtitle)
@@ -229,6 +230,25 @@ private struct BudgetCardView: View {
 
     private var spentLabel: String {
         summary?.percentSpentLabel ?? "0%"
+    }
+
+    private var totalSpentLabel: some View {
+        Text("Total Spent")
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .fixedSize()
+    }
+
+    /// "$7.25 of $2,000.00" — the budget itself wasn't shown anywhere before.
+    private var totalSpentValue: some View {
+        HStack(spacing: 4) {
+            Text(spent.asCurrency())
+                .foregroundStyle(.primary)
+            Text("of \((summary?.monthlyBudget ?? 0).asCurrency())")
+                .foregroundStyle(.secondary)
+        }
+        .font(.subheadline.weight(.semibold))
+        .fixedSize()
     }
 
     /// "November Budget" — makes it clear the numbers reset each month.
@@ -288,23 +308,22 @@ private struct BudgetCardView: View {
 
                 ProgressRingView(progress: spentProgress, label: spentLabel, caption: "spent", color: statusColor)
                     .frame(width: 76, height: 76)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(spentLabel) of budget spent")
             }
 
-            HStack {
-                Text("Total Spent")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.secondary)
-
-                Spacer()
-
-                // "$7.25 of $2,000.00" — the budget itself wasn't shown anywhere before.
-                (Text(spent.asCurrency())
-                    .foregroundStyle(.primary)
-                 + Text(" of \((summary?.monthlyBudget ?? 0).asCurrency())")
-                    .foregroundStyle(.secondary))
-                    .font(.subheadline.weight(.semibold))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+            // Side by side when it fits; stacked at large text sizes instead of truncating.
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    totalSpentLabel
+                    Spacer()
+                    totalSpentValue
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    totalSpentLabel
+                    totalSpentValue
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
@@ -339,14 +358,19 @@ private struct ProgressRingView: View {
                 Text(label)
                     .font(.subheadline.bold())
                     .foregroundStyle(.primary)
-                    .minimumScaleFactor(0.7)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                 if let caption {
                     Text(caption)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
                 }
             }
             .padding(.horizontal, 10)
+            // The ring is a fixed-size graphic, so cap its text size; VoiceOver reads the full value.
+            .dynamicTypeSize(...DynamicTypeSize.xLarge)
         }
         .animation(.easeInOut(duration: 0.35), value: progress)
     }
@@ -365,7 +389,7 @@ private struct QuickActionsGridView: View {
                 iconBackground: Color.blue.opacity(0.12),
                 iconForeground: .blue,
                 title: "Add Expense",
-                subtitle: "Record new\nspending",
+                subtitle: "Record new spending",
                 onTap: onAddExpense
             )
             .accessibilityIdentifier("home.quickAction.addExpense")
@@ -375,7 +399,7 @@ private struct QuickActionsGridView: View {
                 iconBackground: Color.purple.opacity(0.12),
                 iconForeground: .purple,
                 title: "View Insights",
-                subtitle: "Analyze \nspending",
+                subtitle: "Analyze spending",
                 onTap: onInsights
             )
             .accessibilityIdentifier("home.quickAction.insights")
@@ -405,22 +429,31 @@ private struct QuickActionCard: View {
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(iconForeground)
                 }
-                
+                .accessibilityHidden(true) // decorative icon
+
                 Text(title)
                     .font(.headline)
                     .foregroundStyle(.primary)
-                
+
+                // Wraps naturally instead of a hand-placed "\n", so it adapts to
+                // larger text sizes and other languages.
                 Text(subtitle)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+
                 Spacer(minLength: 0)
             }
             .padding(16)
             .frame(maxWidth: .infinity, minHeight: 140, alignment: .topLeading)
             .cardStyle()
+            // Makes the whole card the tap target (not just the visible content).
+            .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityHint(subtitle)
     }
 }
 
@@ -503,6 +536,12 @@ private struct TransactionRowView: View {
         }
         .padding(14)
         .cardStyle()
+        // One VoiceOver stop per row: "Coffee, Food, Today, 9:41 AM, spent $4.75"
+        // (instead of separate stops and "minus 4 dollars 75").
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            "\(item.title), \(category.name), \(ExpenseDate.label(for: item.date)), spent \(item.amount.asCurrency())"
+        )
     }
 }
 
