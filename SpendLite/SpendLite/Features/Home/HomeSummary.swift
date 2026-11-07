@@ -25,12 +25,43 @@ struct HomeSummary: Equatable {
         return HomeSummary(monthlyBudget: monthlyBudget, totalSpent: spentThisMonth)
     }
 
+    enum Status: Equatable {
+        case onTrack     // under 80% of budget used
+        case nearLimit   // 80–100% used
+        case overBudget  // spent more than the budget
+    }
+
+    /// Share of the budget used at which we start warning the user.
+    static let nearLimitThreshold = 0.8
+
+    /// Budget minus spending. Negative when over budget.
     var remaining: Double {
         monthlyBudget - totalSpent
     }
-    
+
+    /// What's left to spend, never below 0.
+    var remainingClamped: Double {
+        max(0, remaining)
+    }
+
+    /// How much spending is over the budget (0 when within budget).
+    var amountOver: Double {
+        max(0, -remaining)
+    }
+
+    var isOverBudget: Bool {
+        totalSpent > monthlyBudget
+    }
+
+    /// Share of the budget spent. Can go above 1 when over budget.
     var progress: Double {
-        guard monthlyBudget > 0 else { return 0 }
-        return totalSpent / monthlyBudget 
+        guard monthlyBudget > 0 else { return totalSpent > 0 ? 1 : 0 }
+        return totalSpent / monthlyBudget
+    }
+
+    var status: Status {
+        if isOverBudget { return .overBudget }
+        if progress >= Self.nearLimitThreshold { return .nearLimit }
+        return .onTrack
     }
 }

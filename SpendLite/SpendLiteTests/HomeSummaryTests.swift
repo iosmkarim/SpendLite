@@ -56,6 +56,42 @@ struct HomeSummaryTests {
         #expect(summary.remaining == 2000)
     }
 
+    // MARK: - Status (F6)
+
+    @Test(arguments: [
+        (spent: 0.0,    status: HomeSummary.Status.onTrack),
+        (spent: 799.99, status: .onTrack),
+        (spent: 800.0,  status: .nearLimit),   // exactly 80%
+        (spent: 1000.0, status: .nearLimit),   // exactly at budget is not "over"
+        (spent: 1000.01, status: .overBudget),
+    ])
+    func statusThresholds(spent: Double, status: HomeSummary.Status) {
+        #expect(HomeSummary(monthlyBudget: 1000, totalSpent: spent).status == status)
+    }
+
+    @Test func overBudgetAmounts() {
+        let summary = HomeSummary(monthlyBudget: 1000, totalSpent: 1250)
+        #expect(summary.isOverBudget)
+        #expect(summary.amountOver == 250)
+        #expect(summary.remaining == -250)
+        #expect(summary.remainingClamped == 0)
+        #expect(summary.progress == 1.25)
+    }
+
+    @Test func withinBudgetHasNothingOver() {
+        let summary = HomeSummary(monthlyBudget: 1000, totalSpent: 400)
+        #expect(!summary.isOverBudget)
+        #expect(summary.amountOver == 0)
+        #expect(summary.remainingClamped == 600)
+    }
+
+    @Test func zeroBudgetWithSpendingCountsAsOver() {
+        let summary = HomeSummary(monthlyBudget: 0, totalSpent: 5)
+        #expect(summary.status == .overBudget)
+        #expect(summary.progress == 1)
+        #expect(HomeSummary(monthlyBudget: 0, totalSpent: 0).status == .onTrack)
+    }
+
     // MARK: - HomeViewModel
 
     @Test func homeViewModelSummaryIgnoresOlderMonths() async throws {

@@ -193,20 +193,31 @@ private struct BudgetCardView: View {
     let summary: HomeSummary?
     let onEdit: () -> Void
 
-    // MARK: - Derived values (keep type-checking simple)
-    private var budget: Double { summary?.monthlyBudget ?? 0 }
+    // MARK: - Derived values (all budget maths lives in HomeSummary)
     private var spent: Double { summary?.totalSpent ?? 0 }
-    private var remaining: Double { max(0, budget - spent) }
+    private var status: HomeSummary.Status { summary?.status ?? .onTrack }
 
-    /// progress for "remaining" ring (0...1)
+    /// Remaining share of the budget for the ring (0...1); empty when over budget.
     private var remainingProgress: Double {
-        guard budget > 0 else { return 0 }
-        let value = remaining / budget
-        return min(1, max(0, value))
+        min(1, max(0, 1 - (summary?.progress ?? 0)))
     }
 
     private var remainingLabel: String {
         "\(Int(remainingProgress * 100))%"
+    }
+
+    /// Big number: what's left, or how much over budget.
+    private var headlineAmount: Double {
+        guard let summary else { return 0 }
+        return summary.isOverBudget ? summary.amountOver : summary.remainingClamped
+    }
+
+    private var statusColor: Color {
+        switch status {
+        case .onTrack: return .green
+        case .nearLimit: return .orange
+        case .overBudget: return .red
+        }
     }
 
     var body: some View {
@@ -227,18 +238,24 @@ private struct BudgetCardView: View {
                     .accessibilityLabel("Edit monthly budget")
                     .accessibilityIdentifier("home.budget.edit")
 
-                    Text(remaining.asCurrency())
+                    Text(headlineAmount.asCurrency())
                         .font(.title.bold())
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(status == .overBudget ? Color.red : Color.primary)
 
-                    Text("remaining")
+                    Text(status == .overBudget ? "over budget" : "remaining")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(status == .overBudget ? Color.red : Color.secondary)
+
+                    if status == .nearLimit {
+                        Label("Close to your limit", systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.orange)
+                    }
                 }
 
                 Spacer()
 
-                ProgressRingView(progress: remainingProgress, label: remainingLabel)
+                ProgressRingView(progress: remainingProgress, label: remainingLabel, color: statusColor)
                     .frame(width: 72, height: 72)
             }
 
@@ -273,18 +290,19 @@ private struct BudgetCardView: View {
 private struct ProgressRingView: View {
     let progress: Double //0...1
     let label: String
-    
+    var color: Color = .green
+
     var body: some View {
         ZStack {
             Circle()
                 .stroke(lineWidth: 8)
                 .foregroundStyle(Color(.systemGray5))
-            
+
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .foregroundStyle(.green)
+                .foregroundStyle(color)
             
             Text(label)
                 .font(.subheadline.bold())
