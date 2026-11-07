@@ -12,10 +12,12 @@ struct HomeScreen: View {
     @EnvironmentObject private var nav: NavCoordinator
     @State private var showingAddExpense = false
     @StateObject private var viewModel: HomeViewModel
-    
+    private let expenses: ExpenseRepository
+
     static let creamBackground: Color = Color(red: 0.98, green: 0.96, blue: 0.90) // soft cream
-    
+
     init(expense: ExpenseRepository) {
+        self.expenses = expense
         _viewModel = StateObject(wrappedValue: HomeViewModel(expenses: expense))
     }
     
@@ -77,9 +79,7 @@ struct HomeScreen: View {
                 viewModel.onAppear()
             }
             .sheet(isPresented: $showingAddExpense) {
-                AddExpenseAmountOnlyView { amount, description, category, date in
-                    // TODO: persist the expense via your repository/view model
-                }
+                AddExpenseAmountOnlyView(expenses: expenses)
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
             }

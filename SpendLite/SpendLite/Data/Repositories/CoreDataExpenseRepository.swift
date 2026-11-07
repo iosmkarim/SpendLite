@@ -61,38 +61,50 @@ final class CoreDataExpenseRepository: ExpenseRepository {
         expensesSubject.send(fetchAllExpenses())
     }
     
-    func addSampleExpense() -> AnyPublisher<Void, Error> {
-        Future<Void, Error> { [weak stack] promise in
-            guard let context = stack?.viewContext else {
+    func addExpense(_ expense: ExpenseItem) -> AnyPublisher<Void, Error> {
+        Future<Void, Error> { [weak self] promise in
+            guard let self else {
                 promise(.failure(NSError(domain: "CoreData", code: -1, userInfo: [NSLocalizedDescriptionKey: "Missing context"])))
                 return
             }
+            let context = self.stack.viewContext
             context.perform {
                 guard let entity = NSEntityDescription.entity(forEntityName: "Expense", in: context) else {
                     promise(.failure(NSError(domain: "CoreData", code: -2, userInfo: [NSLocalizedDescriptionKey: "Missing Expense entity"])))
                     return
                 }
-                
-                let obj = NSManagedObject(entity: entity,
-                                          insertInto: context)
-                obj.setValue(UUID(), forKey: "id")
-                obj.setValue(Date(), forKey: "date")
-                obj.setValue("Sample Coffee", forKey: "title")
-                obj.setValue(5.40, forKey: "amount")
-                obj.setValue("Food & Drink", forKey: "category")
-                
+
+                let obj = NSManagedObject(entity: entity, insertInto: context)
+                obj.setValue(expense.id, forKey: "id")
+                obj.setValue(expense.date, forKey: "date")
+                obj.setValue(expense.title, forKey: "title")
+                obj.setValue(expense.amount, forKey: "amount")
+                obj.setValue(expense.category, forKey: "category")
+
                 do {
                     try context.save()
-                    let latest = self.fetchAllExpenses()
-                    self.expensesSubject.send(latest)
+                    self.expensesSubject.send(self.fetchAllExpenses())
                     promise(.success(()))
-                }catch{
+                } catch {
+                    // Drop the unsaved insert so it can't be saved later by accident.
+                    context.rollback()
                     promise(.failure(error))
                 }
-                
             }
         }
         .eraseToAnyPublisher()
+    }
+
+    func addSampleExpense() -> AnyPublisher<Void, Error> {
+        addExpense(
+            ExpenseItem(
+                id: UUID(),
+                date: Date(),
+                title: "Sample Coffee",
+                amount: 5.40,
+                category: "Food & Drink"
+            )
+        )
     }
     
     func hasAnyExpense() -> AnyPublisher<Bool, Never> {

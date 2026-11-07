@@ -1,8 +1,7 @@
 import SwiftUI
 
 struct AddExpenseAmountOnlyView: View {
-    // Callback to deliver the saved values to a parent if needed
-    var onSave: ((Decimal, String, String?, Date) -> Void)? = nil
+    @StateObject private var viewModel: AddExpenseViewModel
 
     @Environment(\.dismiss) private var dismiss
     @State private var amountText: String = ""
@@ -10,14 +9,32 @@ struct AddExpenseAmountOnlyView: View {
     @State private var selectedCategory: Category? = nil
     @State private var selectedDate: Date = .now
     @State private var showDatePicker: Bool = false
-    
+
+    init(expenses: ExpenseRepository) {
+        _viewModel = StateObject(wrappedValue: AddExpenseViewModel(expenses: expenses))
+    }
+
     // MARK: - Saving
     private func handleSave() {
         guard let amount, amount > 0 else { return }
-        // Use selectedCategory name if available; otherwise nil
-        let categoryName = selectedCategory?.name
-        onSave?(amount, descriptionText.trimmingCharacters(in: .whitespacesAndNewlines), categoryName, selectedDate)
-        dismiss()
+        viewModel.save(
+            amount: amount,
+            description: descriptionText,
+            category: selectedCategory?.name,
+            date: selectedDate
+        ) {
+            resetForm()
+            // Closes the sheet when presented from Home; does nothing in the Add tab.
+            dismiss()
+        }
+    }
+
+    private func resetForm() {
+        amountText = ""
+        descriptionText = ""
+        selectedCategory = nil
+        selectedDate = .now
+        showDatePicker = false
     }
     
     private struct Category: Identifiable, Hashable {
@@ -27,7 +44,8 @@ struct AddExpenseAmountOnlyView: View {
         let color: Color
     }
     
-    private let categories: [Category] = [
+    // Static so each category keeps the same id across re-renders (otherwise the selection highlight is lost).
+    private static let categories: [Category] = [
         Category(name: "Food", systemImage: "fork.knife", color: Color.green),
         Category(name: "Transport", systemImage: "car.fill", color: Color.blue),
         Category(name: "Fun", systemImage: "gamecontroller.fill", color: Color.pink),
@@ -38,8 +56,20 @@ struct AddExpenseAmountOnlyView: View {
         Category(name: "Other", systemImage: "plus.circle", color: Color.gray)
     ]
     
-    private var amount: Decimal? { Decimal(string: amountText.filter { "0123456789.,".contains($0) }) }
-    private var canSave: Bool { amount != nil && amount! > 0 }
+    private var categories: [Category] { Self.categories }
+
+    /// Parses the amount using the user's locale, ignoring thousands separators
+    /// (so "1,250.50" in the US is 1250.50, not 1).
+    private var amount: Decimal? {
+        let locale = Locale.current
+        let decimalSeparator = locale.decimalSeparator ?? "."
+        let groupingSeparator = locale.groupingSeparator ?? ","
+        let cleaned = amountText
+            .replacingOccurrences(of: groupingSeparator, with: "")
+            .filter { $0.isNumber || String($0) == decimalSeparator }
+        return Decimal(string: cleaned, locale: locale)
+    }
+    private var canSave: Bool { (amount ?? 0) > 0 && !viewModel.isSaving }
 
     var body: some View {
         NavigationStack {
@@ -181,6 +211,17 @@ struct AddExpenseAmountOnlyView: View {
                     .disabled(!canSave)
                 }
             }
+            .alert(
+                "Couldn't save expense",
+                isPresented: Binding(
+                    get: { viewModel.errorMessage != nil },
+                    set: { if !$0 { viewModel.errorMessage = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(viewModel.errorMessage ?? "")
+            }
             .toolbarBackground(.bar, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .background(
@@ -199,10 +240,5 @@ struct AddExpenseAmountOnlyView: View {
 }
 
 #Preview {
-    AddExpenseAmountOnlyView { amount, description, category, date in
-        print("Saved amount: ", amount as NSDecimalNumber)
-        print("Description: \(description)")
-        print("Category: \(category ?? "none")")
-        print("Date: \(date)")
-    }
+    AddExpenseAmountOnlyView(expenses: AppContainer(inMemory: true).expenses)
 }

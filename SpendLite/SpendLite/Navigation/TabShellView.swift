@@ -26,9 +26,7 @@ struct TabShellView: View {
                     title: "Add",
                     systemImage: "plus.circle.fill",
                     navTitle: "Add Expense") {
-                        AddExpenseAmountOnlyView { amount, description, category, date in
-                            // TODO: persist the expense via your repository/view model
-                        }
+                        AddExpenseAmountOnlyView(expenses: container.expenses)
                     }
 
                 //Insights
