@@ -12,9 +12,6 @@ protocol ExpenseRepository {
     /// emit the full list whenever storage changes.
     var expensesPublisher: AnyPublisher<[ExpenseItem], Never> { get }
     
-    /// Publishes true if there is at least one expense in storage.
-    func hasAnyExpense() -> AnyPublisher<Bool, Never>
-    
     /// Saves a new expense to storage, then re-emits the full list via `expensesPublisher`.
     func addExpense(_ expense: ExpenseItem) -> AnyPublisher<Void, Error>
 

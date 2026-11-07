@@ -6,11 +6,16 @@
 //
 
 import SwiftUI
-import CoreData
 
 @main
 struct SpendLiteApp: App {
-    private let container = AppContainer(inMemory: false) // production
+    /// UI tests launch with this flag so they run on throwaway in-memory data
+    /// instead of reading or adding to the real expenses and budget.
+    static let uiTestingArgument = "-ui-testing"
+
+    private let container = AppContainer(
+        inMemory: ProcessInfo.processInfo.arguments.contains(SpendLiteApp.uiTestingArgument)
+    )
 
     var body: some Scene {
         WindowGroup {

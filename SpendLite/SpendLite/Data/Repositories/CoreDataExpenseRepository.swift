@@ -107,14 +107,6 @@ final class CoreDataExpenseRepository: ExpenseRepository {
         )
     }
     
-    func hasAnyExpense() -> AnyPublisher<Bool, Never> {
-        // keep it simple - run a small fetch on a background queue
-        expensesPublisher
-            .map { !$0.isEmpty }
-            .removeDuplicates()
-            .eraseToAnyPublisher()
-    }
-    
     private func fetchAllExpenses() -> [ExpenseItem] {
         let context = stack.viewContext
         let request = NSFetchRequest<NSManagedObject>(entityName: "Expense")

@@ -13,6 +13,8 @@ final class HomeNavigationUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
+        // Fresh in-memory data each run; never touches the real app data.
+        app.launchArguments += ["-ui-testing"]
         app.launch()
 
         // Quick actions only show when there's data; add a sample if Home is empty.

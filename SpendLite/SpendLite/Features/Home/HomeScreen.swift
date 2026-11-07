@@ -92,9 +92,6 @@ struct HomeScreen: View {
                 )
             }
         }
-        .onAppear {
-            viewModel.onAppear()
-        }
         .sheet(isPresented: $showingAddExpense) {
             // A sheet is a new presentation, so it needs its own stack for the title and toolbar.
             NavigationStack {
@@ -510,42 +507,6 @@ private extension Double {
         formatter.numberStyle = .currency
         formatter.maximumFractionDigits = 0
         return formatter.string(from: NSNumber(value: self)) ?? "$0"
-    }
-}
-
-// Decimal extension
-
-private extension Decimal {
-    func asCurrencyDecimal() -> String {
-        let ns = self as NSDecimalNumber
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: ns) ?? "$0"
-    }
-}
-
-private struct AddExpensePlaceholderView: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Text("Add Expense")
-                    .font(.title2.bold())
-                Text("This is a placeholder. We'll add the real form next.")
-                    .foregroundStyle(.secondary)
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Add Expense")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
-                }
-            }
-        }
     }
 }
 

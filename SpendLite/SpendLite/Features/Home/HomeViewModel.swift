@@ -20,7 +20,7 @@ final class HomeViewModel: ObservableObject {
     private let budget: BudgetRepository
     private let now: () -> Date
     private let calendar: Calendar
-    private var cacellables = Set<AnyCancellable>()
+    private var cancellables = Set<AnyCancellable>()
     @Published var isAddingSampleData = false
     @Published var errorMessage: String?
 
@@ -41,12 +41,6 @@ final class HomeViewModel: ObservableObject {
     /// Saves a new monthly budget; the summary updates automatically.
     func setMonthlyBudget(_ amount: Double) {
         budget.setMonthlyBudget(amount)
-    }
-    
-    // MARK: - Intent
-    
-    func onAppear() {
-        
     }
     
     // MARK: - Method
@@ -78,7 +72,7 @@ final class HomeViewModel: ObservableObject {
                     calendar: self.calendar
                 )
             }
-            .store(in: &cacellables)
+            .store(in: &cancellables)
     }
     
     func addSampleData() {
@@ -96,6 +90,6 @@ final class HomeViewModel: ObservableObject {
                     self?.errorMessage = error.localizedDescription
                 }
             } receiveValue: { _ in }
-            .store(in: &cacellables)
+            .store(in: &cancellables)
     }
 }
