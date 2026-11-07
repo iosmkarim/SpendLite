@@ -170,12 +170,22 @@ private struct HeaderSectionView: View {
     let name: String
     let subtitle: String
     
+    /// "Good Morning, Sam" — or just "Good Morning" when there's no name (no dangling comma).
+    private func title(at date: Date) -> String {
+        let greeting = Greeting.text(for: date)
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        return trimmed.isEmpty ? greeting : "\(greeting), \(trimmed)"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
-                Text("Good Evening, \(name)")
-                    .font(.largeTitle.bold())
-                    .foregroundStyle(.primary)
+                // Re-evaluates each minute so the greeting changes while the app stays open.
+                TimelineView(.everyMinute) { context in
+                    Text(title(at: context.date))
+                        .font(.largeTitle.bold())
+                        .foregroundStyle(.primary)
+                }
                 
                 Text("👋")
                     .font(.title)
