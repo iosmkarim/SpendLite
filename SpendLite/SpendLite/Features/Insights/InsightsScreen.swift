@@ -210,20 +210,3 @@ private struct CategoryRow: View {
 #Preview {
     InsightsScreen(expense: AppContainer(inMemory: true).expenses)
 }
-
-// MARK: - Local Helpers
-private let _insightsCurrencyFormatter: NumberFormatter = {
-    let f = NumberFormatter()
-    f.numberStyle = .currency
-    f.locale = .current
-    return f
-}()
-
-extension Decimal {
-    /// Formats the decimal as a currency string using the current locale.
-    /// This is scoped to this file to avoid access level issues if a global helper exists elsewhere.
-    func asCurrency() -> String {
-        let nsNumber = self as NSDecimalNumber
-        return _insightsCurrencyFormatter.string(from: nsNumber) ?? "$0.00"
-    }
-}

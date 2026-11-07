@@ -484,7 +484,8 @@ private struct TransactionRowView: View {
             
             Spacer()
             
-            Text("-\(item.amount.asCurrency())")
+            // Let the formatter place the minus sign (locale-correct, e.g. "-$5.40").
+            Text((-item.amount).asCurrency())
                 .font(.headline)
                 .foregroundStyle(.primary)
         }
@@ -499,16 +500,6 @@ private struct TransactionRowView: View {
     }
 }
 
-// Double extension
-
-private extension Double {
-    func asCurrency() -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: self)) ?? "$0"
-    }
-}
 
 #Preview("With expenses") {
     let container = AppContainer.preview()
