@@ -549,7 +549,15 @@ private struct AddExpensePlaceholderView: View {
     }
 }
 
-#Preview {
+#Preview("With expenses") {
+    let container = AppContainer.preview()
+    NavigationStack {
+        HomeScreen(expense: container.expenses, budget: container.budget)
+    }
+    .environmentObject(NavCoordinator())
+}
+
+#Preview("Empty") {
     let container = AppContainer(inMemory: true)
     NavigationStack {
         HomeScreen(expense: container.expenses, budget: container.budget)
