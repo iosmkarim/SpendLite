@@ -59,36 +59,35 @@ struct HomeScreen: View {
         .background(Self.creamBackground)
     }
     
+    // No NavigationStack here: the Home tab already provides one (TabShellView.makeTab).
     var body: some View {
-        NavigationStack {
-            Group {
-                if viewModel.hasAnyExpense {
-                    populatedHome
-                } else {
-                    EmptyHomeView(
-                        onAddExpense: {
-                            showingAddExpense = true
-                        },
-                        onAddSampleData: {
-                            viewModel.addSampleData()
-                        }
-                    )
-                }
+        Group {
+            if viewModel.hasAnyExpense {
+                populatedHome
+            } else {
+                EmptyHomeView(
+                    onAddExpense: {
+                        showingAddExpense = true
+                    },
+                    onAddSampleData: {
+                        viewModel.addSampleData()
+                    }
+                )
             }
-            .onAppear {
-                viewModel.onAppear()
-            }
-            .sheet(isPresented: $showingAddExpense) {
-                AddExpenseAmountOnlyView(expenses: expenses)
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-            }
-            // Navigation bar appearance: make it non-translucent/solid even at scroll edge
-            .navigationTitle("Home")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(Color(.systemBackground), for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
         }
+        .onAppear {
+            viewModel.onAppear()
+        }
+        .sheet(isPresented: $showingAddExpense) {
+            // A sheet is a new presentation, so it needs its own stack for the title and toolbar.
+            NavigationStack {
+                AddExpenseAmountOnlyView(expenses: expenses, isPresentedAsSheet: true)
+            }
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+        }
+        // The greeting header acts as the page title, so hide the (empty) nav bar.
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
     
@@ -277,7 +276,8 @@ private struct QuickActionsGridView: View {
                 subtitle: "Record new\nspending",
                 onTap: onAddExpense
             )
-            
+            .accessibilityIdentifier("home.quickAction.addExpense")
+
             QuickActionCard(
                 icon: "chart.bar.xaxis",
                 iconBackground: Color.purple.opacity(0.12),
@@ -286,6 +286,7 @@ private struct QuickActionsGridView: View {
                 subtitle: "Analyze \nspending",
                 onTap: onInsights
             )
+            .accessibilityIdentifier("home.quickAction.insights")
         }
     }
 }
