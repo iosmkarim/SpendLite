@@ -6,7 +6,7 @@ struct AddExpenseAmountOnlyView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var amountText: String = ""
     @State private var descriptionText: String = ""
-    @State private var selectedCategory: Category? = nil
+    @State private var selectedCategory: ExpenseCategory? = nil
     @State private var selectedDate: Date = .now
     @State private var showDatePicker: Bool = false
 
@@ -50,26 +50,8 @@ struct AddExpenseAmountOnlyView: View {
         showDatePicker = false
     }
     
-    private struct Category: Identifiable, Hashable {
-        let id = UUID()
-        let name: String
-        let systemImage: String
-        let color: Color
-    }
-    
-    // Static so each category keeps the same id across re-renders (otherwise the selection highlight is lost).
-    private static let categories: [Category] = [
-        Category(name: "Food", systemImage: "fork.knife", color: Color.green),
-        Category(name: "Transport", systemImage: "car.fill", color: Color.blue),
-        Category(name: "Fun", systemImage: "gamecontroller.fill", color: Color.pink),
-        Category(name: "Shopping", systemImage: "bag.fill", color: Color.orange),
-        Category(name: "Home", systemImage: "house.fill", color: Color.purple),
-        Category(name: "Health", systemImage: "heart.fill", color: Color.red),
-        Category(name: "Education", systemImage: "book.fill", color: Color.indigo),
-        Category(name: "Other", systemImage: "plus.circle", color: Color.gray)
-    ]
-    
-    private var categories: [Category] { Self.categories }
+    /// Shared with Home/History so icons and colours match everywhere.
+    private var categories: [ExpenseCategory] { ExpenseCategory.allCases }
 
     /// Parses the amount using the user's locale, ignoring thousands separators
     /// (so "1,250.50" in the US is 1250.50, not 1).

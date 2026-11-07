@@ -102,7 +102,7 @@ final class CoreDataExpenseRepository: ExpenseRepository {
                 date: Date(),
                 title: "Sample Coffee",
                 amount: 5.40,
-                category: "Food & Drink"
+                category: ExpenseCategory.food.rawValue
             )
         )
     }

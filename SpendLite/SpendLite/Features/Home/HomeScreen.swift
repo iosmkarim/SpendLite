@@ -450,36 +450,40 @@ private struct RecentTransactionsSectionView: View {
 private struct TransactionRowView: View {
     let item : ExpenseItem
     
-    // TEMP: category/icon mapping (later from model)
-    private var categoryText: String { "Food & Drink" }
-    private var iconName: String { "fork.knife" }
-    private var iconBg: Color { Color.orange.opacity(0.12)}
-    private var iconFg: Color { .orange }
-    
+    private var category: ExpenseCategory { item.categoryKind }
+
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(iconBg)
+                    .fill(category.color.opacity(0.12))
                     .frame(width: 44, height: 44)
-                
-                Image(systemName: iconName)
+
+                Image(systemName: category.systemImage)
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(iconFg)
+                    .foregroundStyle(category.color)
             }
-            
+
             VStack(alignment: .leading, spacing: 6) {
                 Text(item.title)
                     .font(.headline)
                     .foregroundStyle(.primary)
-                
-                Text(categoryText)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.orange)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(.orange.opacity(0.12))
-                    .clipShape(Capsule())
+                    .lineLimit(1)
+
+                HStack(spacing: 8) {
+                    Text(category.name)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(category.color)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(category.color.opacity(0.12))
+                        .clipShape(Capsule())
+
+                    Text(ExpenseDate.label(for: item.date))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
             
             Spacer()
