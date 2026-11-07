@@ -223,13 +223,19 @@ private struct BudgetCardView: View {
     private var spent: Double { summary?.totalSpent ?? 0 }
     private var status: HomeSummary.Status { summary?.status ?? .onTrack }
 
-    /// Remaining share of the budget for the ring (0...1); empty when over budget.
-    private var remainingProgress: Double {
-        min(1, max(0, 1 - (summary?.progress ?? 0)))
+    /// Share of the budget spent for the ring (0...1). It fills up as you spend; full when over.
+    private var spentProgress: Double {
+        min(1, max(0, summary?.progress ?? 0))
     }
 
-    private var remainingLabel: String {
-        "\(Int(remainingProgress * 100))%"
+    private var spentLabel: String {
+        summary?.percentSpentLabel ?? "0%"
+    }
+
+    /// "November Budget" — makes it clear the numbers reset each month.
+    /// Home re-renders when the day changes (HomeViewModel), so this rolls over on the 1st.
+    private var title: String {
+        "\(Date.now.formatted(.dateTime.month(.wide))) Budget"
     }
 
     /// Big number: what's left, or how much over budget.
@@ -253,7 +259,7 @@ private struct BudgetCardView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Button(action: onEdit) {
                         HStack(spacing: 6) {
-                            Text("Monthly Budget")
+                            Text(title)
                             Image(systemName: "pencil")
                                 .font(.caption.weight(.semibold))
                         }
@@ -281,8 +287,8 @@ private struct BudgetCardView: View {
 
                 Spacer()
 
-                ProgressRingView(progress: remainingProgress, label: remainingLabel, color: statusColor)
-                    .frame(width: 72, height: 72)
+                ProgressRingView(progress: spentProgress, label: spentLabel, caption: "spent", color: statusColor)
+                    .frame(width: 76, height: 76)
             }
 
             HStack {
@@ -292,9 +298,14 @@ private struct BudgetCardView: View {
 
                 Spacer()
 
-                Text(spent.asCurrency())
-                    .font(.subheadline.weight(.semibold))
+                // "$7.25 of $2,000.00" — the budget itself wasn't shown anywhere before.
+                (Text(spent.asCurrency())
                     .foregroundStyle(.primary)
+                 + Text(" of \((summary?.monthlyBudget ?? 0).asCurrency())")
+                    .foregroundStyle(.secondary))
+                    .font(.subheadline.weight(.semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
@@ -316,6 +327,7 @@ private struct BudgetCardView: View {
 private struct ProgressRingView: View {
     let progress: Double //0...1
     let label: String
+    var caption: String? = nil
     var color: Color = .green
 
     var body: some View {
@@ -329,10 +341,19 @@ private struct ProgressRingView: View {
                 .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .foregroundStyle(color)
-            
-            Text(label)
-                .font(.subheadline.bold())
-                .foregroundStyle(.primary)
+
+            VStack(spacing: 0) {
+                Text(label)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
+                    .minimumScaleFactor(0.7)
+                if let caption {
+                    Text(caption)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.horizontal, 10)
         }
         .animation(.easeInOut(duration: 0.35), value: progress)
     }

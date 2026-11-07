@@ -168,3 +168,19 @@ struct HomeSummaryTests {
         return nil
     }
 }
+
+// MARK: - Ring label (U5)
+
+struct PercentSpentLabelTests {
+    @Test(arguments: [
+        (spent: 0.0,    label: "0%"),
+        (spent: 7.25,   label: "<1%"),   // 0.36% — not "0%", something was spent
+        (spent: 20.0,   label: "1%"),
+        (spent: 995.0,  label: "50%"),   // 49.75% rounds to 50, not truncated to 49
+        (spent: 2000.0, label: "100%"),
+        (spent: 2500.0, label: "125%"),  // over budget shows past 100
+    ])
+    func label(spent: Double, label: String) {
+        #expect(HomeSummary(monthlyBudget: 2000, totalSpent: spent).percentSpentLabel == label)
+    }
+}

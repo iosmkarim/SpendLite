@@ -59,6 +59,14 @@ struct HomeSummary: Equatable {
         return totalSpent / monthlyBudget
     }
 
+    /// Share of the budget spent, as shown in the ring: "0%", "<1%", "42%", "125%".
+    /// Rounded (not truncated) so it agrees with the amounts shown next to it.
+    var percentSpentLabel: String {
+        let percent = progress * 100
+        if percent > 0 && percent < 1 { return "<1%" }
+        return "\(Int(percent.rounded()))%"
+    }
+
     var status: Status {
         if isOverBudget { return .overBudget }
         if progress >= Self.nearLimitThreshold { return .nearLimit }
