@@ -9,10 +9,12 @@ import Foundation
 import Combine
 
 final class HomeViewModel: ObservableObject {
-    
+
     // MARK: - Published State
     
     @Published var hasAnyExpense: Bool = false
+    @Published var recentExpenses: [ExpenseItem] = []
+    @Published var summary: HomeSummary? = nil
     
     private let expenses: ExpenseRepository
     private var cacellables = Set<AnyCancellable>()
@@ -21,7 +23,7 @@ final class HomeViewModel: ObservableObject {
     
     init(expenses: ExpenseRepository) {
         self.expenses = expenses
-        observeHasAnyExpense()
+        observeExpense()
     }
     
     // MARK: - Intent
@@ -32,12 +34,19 @@ final class HomeViewModel: ObservableObject {
     
     // MARK: - Method
     
-    private func observeHasAnyExpense() {
+    private func observeExpense() {
         expenses
-            .hasAnyExpense()
+            .expensesPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] hasAny in
-                self?.hasAnyExpense = hasAny
+            .sink { [weak self] items in
+                guard let self else { return }
+                
+                self.hasAnyExpense = !items.isEmpty
+                self.recentExpenses = Array(items.prefix(5))
+                
+                let monthlyBudget = 2000.0 // TEMP: hardcode for now
+                let totalSpent = items.reduce(0) { $0 + $1.amount }
+                self.summary = HomeSummary(monthlyBudget: monthlyBudget, totalSpent: totalSpent)
                 
             }
             .store(in: &cacellables)
