@@ -21,6 +21,7 @@ struct PersistenceController {
             newExpense.title = "Sample Coffee"
             newExpense.amount = -5.40
             newExpense.category = "Food"
+            
         }
         do {
             try viewContext.save()
