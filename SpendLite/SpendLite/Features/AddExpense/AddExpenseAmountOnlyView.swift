@@ -220,17 +220,7 @@ struct AddExpenseAmountOnlyView: View {
         }
         .toolbarBackground(.bar, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .background(
-            LinearGradient(
-                colors: [
-                    Color(red: 255/255, green: 250/255, blue: 240/255), // Linen (lighter)
-                    Color(red: 255/255, green: 252/255, blue: 245/255)  // Soft Cream (very light)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-        )
+        .background(Color.appBackground.ignoresSafeArea())
     }
 }
 

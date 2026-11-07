@@ -33,7 +33,7 @@ struct InsightsScreen: View {
             .padding(.vertical, 16)
         }
         .scrollIndicators(.hidden)
-        .background(HomeScreen.creamBackground)
+        .background(Color.appBackground)
         .navigationTitle("Insights")
         .navigationBarTitleDisplayMode(.large)
         .onAppear { viewModel.onAppear() }
@@ -106,7 +106,7 @@ private struct SegmentedButton: View {
                 .font(.subheadline.weight(.semibold))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(isSelected ? Color.blue.opacity(0.12) : Color(.secondarySystemBackground))
+                .background(isSelected ? Color.blue.opacity(0.12) : Color.insetBackground)
                 .foregroundStyle(isSelected ? .blue : .primary)
                 .clipShape(Capsule())
         }
@@ -134,17 +134,11 @@ private struct TotalSpendingCard: View {
                 .font(.title.bold())
 
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.secondarySystemBackground))
+                .fill(Color.insetBackground)
                 .frame(height: 160)
         }
         .padding(16)
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color(.separator).opacity(0.35), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 6)
+        .cardStyle()
     }
 }
 
@@ -174,13 +168,7 @@ private struct CategoriesCard: View {
             list
         }
         .padding(16)
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color(.separator).opacity(0.35), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 6)
+        .cardStyle()
     }
 }
 
@@ -197,7 +185,7 @@ private struct CategoryRow: View {
                 .font(.subheadline.weight(.semibold))
         }
         .padding(12)
-        .background(Color(.systemBackground))
+        .background(Color.insetBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)

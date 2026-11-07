@@ -16,7 +16,6 @@ struct HomeScreen: View {
     @StateObject private var viewModel: HomeViewModel
     private let expenses: ExpenseRepository
 
-    static let creamBackground: Color = Color(red: 0.98, green: 0.96, blue: 0.90) // soft cream
 
     init(expense: ExpenseRepository, budget: BudgetRepository) {
         self.expenses = expense
@@ -72,7 +71,7 @@ struct HomeScreen: View {
             .padding(.vertical, 16)
         }
         .scrollIndicators(.hidden)
-        .background(Self.creamBackground)
+        .background(Color.appBackground)
     }
     
     // No NavigationStack here: the Home tab already provides one (TabShellView.makeTab).
@@ -176,7 +175,7 @@ private struct EmptyHomeView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(HomeScreen.creamBackground)
+        .background(Color.appBackground)
     }
 }
     
@@ -309,17 +308,11 @@ private struct BudgetCardView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
-            .background(Color(.secondarySystemBackground))
+            .background(Color.insetBackground)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .padding(18)
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color(.separator).opacity(0.35), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 6)
+        .cardStyle()
     }
 }
 
@@ -425,13 +418,7 @@ private struct QuickActionCard: View {
             }
             .padding(16)
             .frame(maxWidth: .infinity, minHeight: 140, alignment: .topLeading)
-            .background(Color(.systemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(Color(.separator).opacity(0.35), lineWidth: 1)
-            )
-            .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 6)
+            .cardStyle()
         }
         .buttonStyle(.plain)
     }
@@ -515,13 +502,7 @@ private struct TransactionRowView: View {
                 .foregroundStyle(.primary)
         }
         .padding(14)
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color(.separator).opacity(0.35), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 5)
+        .cardStyle()
     }
 }
 
