@@ -87,7 +87,8 @@ struct HomeScreen: View {
                     },
                     onAddSampleData: {
                         viewModel.addSampleData()
-                    }
+                    },
+                    isAddingSampleData: viewModel.isAddingSampleData
                 )
             }
         }
@@ -110,6 +111,17 @@ struct HomeScreen: View {
         } message: {
             Text("How much do you want to spend each month?")
         }
+        .alert(
+            "Couldn't add sample data",
+            isPresented: Binding(
+                get: { viewModel.errorMessage != nil },
+                set: { if !$0 { viewModel.errorMessage = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
+        }
         // The greeting header acts as the page title, so hide the (empty) nav bar.
         .toolbar(.hidden, for: .navigationBar)
     }
@@ -120,14 +132,13 @@ private struct EmptyHomeView: View {
     
     let onAddExpense: () -> Void
     let onAddSampleData: () -> Void
-    
+    let isAddingSampleData: Bool
+
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
-            
-            //Icon placeholder
-            
-            Image(systemName: "creditCard")
+
+            Image(systemName: "creditcard")
                 .font(.system(size: 52, weight: .semibold))
                 .foregroundStyle(.blue)
             
@@ -153,10 +164,18 @@ private struct EmptyHomeView: View {
             .padding(.horizontal, 32)
             
             Button(action: onAddSampleData) {
-                Text("Add sample data")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                HStack(spacing: 8) {
+                    if isAddingSampleData {
+                        ProgressView()
+                            .controlSize(.small)
+                    }
+                    Text("Add sample data")
+                }
+                .font(.subheadline)
+                .foregroundColor(.secondary)
             }
+            // Blocks double-taps while the save is in flight.
+            .disabled(isAddingSampleData)
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

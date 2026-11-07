@@ -82,6 +82,8 @@ final class HomeViewModel: ObservableObject {
     }
     
     func addSampleData() {
+        // Ignore repeat taps while a sample is already being saved (prevents duplicates).
+        guard !isAddingSampleData else { return }
         isAddingSampleData = true
         errorMessage = nil
         
@@ -93,9 +95,7 @@ final class HomeViewModel: ObservableObject {
                 if case let .failure(error) = completion {
                     self?.errorMessage = error.localizedDescription
                 }
-            } receiveValue: { _ in
-                print("success")
-            }
+            } receiveValue: { _ in }
             .store(in: &cacellables)
     }
 }
