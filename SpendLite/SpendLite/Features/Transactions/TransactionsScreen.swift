@@ -116,7 +116,7 @@ struct TransactionsScreen: View {
         } label: {
             TransactionRowView(item: item)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableCard)
         .accessibilityHint("Double-tap to edit")
         .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 5, trailing: 16))
         .listRowSeparator(.hidden)

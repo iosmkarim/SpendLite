@@ -451,7 +451,7 @@ private struct QuickActionCard: View {
             // Makes the whole card the tap target (not just the visible content).
             .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressableCard)
         .accessibilityLabel(title)
         .accessibilityHint(subtitle)
     }

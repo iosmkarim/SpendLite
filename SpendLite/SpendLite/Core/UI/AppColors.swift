@@ -6,28 +6,27 @@
 import SwiftUI
 import UIKit
 
-/// App colour palette. Every colour has a light and a dark version, so screens
-/// stay readable in Dark Mode (a fixed cream background with white text was unreadable).
+/// App colour palette, built on Apple's standard "grouped" system colours
+/// (the look of Settings, Wallet, Health): a light grey page with white cards on top.
+/// These adapt automatically to Dark Mode and Increase Contrast.
 extension Color {
-    /// Page background: soft cream in light mode, warm near-black in dark mode.
-    static let appBackground = Color(light: UIColor(red: 0.98, green: 0.96, blue: 0.90, alpha: 1),
-                                     dark: UIColor(red: 0.07, green: 0.065, blue: 0.06, alpha: 1))
+    /// Page background: light grey (#F2F2F7) / black.
+    static let appBackground = Color(uiColor: .systemGroupedBackground)
 
-    /// Cards sitting on the page background: white / dark grey.
-    static let cardBackground = Color(light: .white,
-                                      dark: UIColor(red: 0.13, green: 0.125, blue: 0.12, alpha: 1))
+    /// Cards sitting on the page: white / dark grey (#1C1C1E).
+    static let cardBackground = Color(uiColor: .secondarySystemGroupedBackground)
 
-    /// Inset areas inside a card (e.g. the "Total Spent" pill): light grey / lighter dark grey.
-    static let insetBackground = Color(light: UIColor(red: 0.95, green: 0.95, blue: 0.97, alpha: 1),
-                                       dark: UIColor(red: 0.20, green: 0.19, blue: 0.18, alpha: 1))
+    /// Inset areas inside a card (e.g. the "Total Spent" pill): light grey / lighter dark grey (#2C2C2E).
+    static let insetBackground = Color(uiColor: .tertiarySystemGroupedBackground)
 
-    /// Card border: subtle in both modes.
-    static let cardBorder = Color(light: UIColor.separator.withAlphaComponent(0.35),
+    /// Thin card edge. Light: a faint dark line. Dark: a faint light line, since
+    /// shadows don't show on a black page and the edge is what separates the card.
+    static let cardBorder = Color(light: UIColor.black.withAlphaComponent(0.05),
                                   dark: UIColor.white.withAlphaComponent(0.08))
 
-    /// Soft drop shadow in light mode; shadows don't read on dark backgrounds, so none there.
-    static let cardShadow = Color(light: UIColor.black.withAlphaComponent(0.04),
-                                  dark: .clear)
+    /// Shadows read in light mode only; in dark mode depth comes from the lighter card colour.
+    static let cardShadowNear = Color(light: UIColor.black.withAlphaComponent(0.06), dark: .clear)
+    static let cardShadowFar = Color(light: UIColor.black.withAlphaComponent(0.08), dark: .clear)
 
     init(light: UIColor, dark: UIColor) {
         self.init(uiColor: UIColor { traits in
@@ -37,15 +36,31 @@ extension Color {
 }
 
 extension View {
-    /// The standard card look used across Home and Insights.
+    /// The standard raised card used across the app.
+    ///
+    /// Depth comes from two shadows, like a real object under soft light:
+    /// a tight one where the card "touches" the page, and a wide, soft one below it.
     func cardStyle(cornerRadius: CGFloat = 18) -> some View {
-        self
-            .background(Color.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(Color.cardBorder, lineWidth: 1)
-            )
-            .shadow(color: .cardShadow, radius: 10, x: 0, y: 6)
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        return self
+            .background(Color.cardBackground, in: shape)
+            .overlay(shape.strokeBorder(Color.cardBorder, lineWidth: 1))
+            .shadow(color: .cardShadowNear, radius: 2, x: 0, y: 1)
+            .shadow(color: .cardShadowFar, radius: 14, x: 0, y: 8)
     }
+}
+
+/// For tappable cards: presses the card slightly into the page while touched,
+/// so it feels like a physical button.
+struct PressableCardButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .brightness(configuration.isPressed ? -0.02 : 0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
+    }
+}
+
+extension ButtonStyle where Self == PressableCardButtonStyle {
+    static var pressableCard: PressableCardButtonStyle { .init() }
 }
