@@ -20,23 +20,14 @@ struct TabShellView: View {
                 HomeScreen(expense: container.expenses, budget: container.budget)
             }
 
-            // Add expense
-            makeTab(.add, title: "Add", systemImage: "plus.circle.fill", navTitle: "Add Expense") {
-                AddExpenseAmountOnlyView(expenses: container.expenses) {
-                    // After saving from the tab, go back Home to see it in Recent Transactions.
-                    nav.selectedTab = .home
-                }
+            // Transactions (adding lives on Home's card and the + here, so there's no Add tab)
+            makeTab(.transactions, title: "Transactions", systemImage: "list.bullet.rectangle.fill", navTitle: "Transactions") {
+                TransactionsScreen(expenses: container.expenses)
             }
 
             // Insights
             makeTab(.insights, title: "Insights", systemImage: "chart.pie.fill", navTitle: "Insights") {
                 InsightsScreen(expense: container.expenses)
-            }
-
-            // History
-            makeTab(.history, title: "History", systemImage: "clock.arrow.circlepath", navTitle: "History") {
-                Text("History")
-                    .font(.title)
             }
 
             // Settings

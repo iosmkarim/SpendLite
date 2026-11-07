@@ -17,14 +17,22 @@ struct AddExpenseAmountOnlyView: View {
 
     /// Doesn't create its own NavigationStack: the caller provides one
     /// (the tab's stack, or a NavigationStack wrapped around the sheet).
+    /// Pass `editing` to edit an existing expense: the form starts filled in and Save updates it.
     init(
         expenses: ExpenseRepository,
+        editing: ExpenseItem? = nil,
         isPresentedAsSheet: Bool = false,
         onSaved: (() -> Void)? = nil
     ) {
-        _viewModel = StateObject(wrappedValue: AddExpenseViewModel(expenses: expenses))
+        _viewModel = StateObject(wrappedValue: AddExpenseViewModel(expenses: expenses, editing: editing))
         self.isPresentedAsSheet = isPresentedAsSheet
         self.onSaved = onSaved
+        if let editing {
+            _amountText = State(initialValue: AddExpenseViewModel.amountText(for: editing.amount))
+            _descriptionText = State(initialValue: AddExpenseViewModel.descriptionText(for: editing))
+            _selectedCategory = State(initialValue: editing.categoryKind)
+            _selectedDate = State(initialValue: editing.date)
+        }
     }
 
     // MARK: - Saving
@@ -36,7 +44,7 @@ struct AddExpenseAmountOnlyView: View {
             category: selectedCategory?.name,
             date: selectedDate
         ) {
-            resetForm()
+            if !viewModel.isEditing { resetForm() }
             onSaved?()
             if isPresentedAsSheet { dismiss() }
         }
@@ -50,7 +58,7 @@ struct AddExpenseAmountOnlyView: View {
         showDatePicker = false
     }
     
-    /// Shared with Home/History so icons and colours match everywhere.
+    /// Shared with Home/Transactions so icons and colours match everywhere.
     private var categories: [ExpenseCategory] { ExpenseCategory.allCases }
 
     /// Parses the amount using the user's locale, ignoring thousands separators
@@ -192,7 +200,7 @@ struct AddExpenseAmountOnlyView: View {
                 }
             }
         }
-        .navigationTitle("Add Expense")
+        .navigationTitle(viewModel.isEditing ? "Edit Expense" : "Add Expense")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if isPresentedAsSheet {
@@ -208,7 +216,7 @@ struct AddExpenseAmountOnlyView: View {
             }
         }
         .alert(
-            "Couldn't save expense",
+            viewModel.isEditing ? "Couldn't update expense" : "Couldn't save expense",
             isPresented: Binding(
                 get: { viewModel.errorMessage != nil },
                 set: { if !$0 { viewModel.errorMessage = nil } }

@@ -11,9 +11,8 @@ import Combine
 final class NavCoordinator: ObservableObject {
     enum Tab: Hashable {
         case home
-        case add
+        case transactions
         case insights
-        case history
         case settings
     }
 
@@ -24,8 +23,8 @@ final class NavCoordinator: ObservableObject {
         selectedTab = .insights
     }
 
-    /// "See All" transactions lives in the History tab.
+    /// Home's "See All" opens the full list.
     func goToTransactions() {
-        selectedTab = .history
+        selectedTab = .transactions
     }
 }

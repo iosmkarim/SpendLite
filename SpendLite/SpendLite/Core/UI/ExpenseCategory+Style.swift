@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-/// Icon and colour for each category, shared by the Add form, Home and (later) Insights/History.
+/// Icon and colour for each category, shared by the Add form, Home, Transactions and (later) Insights.
 extension ExpenseCategory {
     var systemImage: String {
         switch self {

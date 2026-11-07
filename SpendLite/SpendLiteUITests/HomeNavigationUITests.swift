@@ -35,26 +35,17 @@ final class HomeNavigationUITests: XCTestCase {
     }
 
     @MainActor
-    func testSeeAllOpensHistoryTab() {
+    func testSeeAllOpensTransactionsTab() {
         app.buttons["See All"].tap()
 
-        let historyTab = app.tabBars.buttons["History"]
-        XCTAssertTrue(historyTab.waitForExistence(timeout: 3), "Tab bar should still be visible")
-        XCTAssertTrue(historyTab.isSelected)
+        let transactionsTab = app.tabBars.buttons["Transactions"]
+        XCTAssertTrue(transactionsTab.waitForExistence(timeout: 3), "Tab bar should still be visible")
+        XCTAssertTrue(transactionsTab.isSelected)
     }
 
     @MainActor
-    func testAddTabSaveReturnsHomeWithoutCancelButton() {
-        app.tabBars.buttons["Add"].tap()
-        XCTAssertFalse(app.navigationBars.buttons["Cancel"].exists, "Cancel makes no sense inside a tab")
-
-        let amount = app.textFields["Enter amount"]
-        XCTAssertTrue(amount.waitForExistence(timeout: 3))
-        amount.tap()
-        amount.typeText("7.25")
-        app.navigationBars.buttons["Save"].tap()
-
-        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.tabBars.buttons["Home"].isSelected)
+    func testTabBarHasNoSeparateAddTab() {
+        let labels = app.tabBars.buttons.allElementsBoundByIndex.map(\.label)
+        XCTAssertEqual(labels, ["Home", "Transactions", "Insights", "Settings"])
     }
 }
