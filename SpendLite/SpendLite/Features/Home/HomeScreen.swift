@@ -11,14 +11,30 @@ struct HomeScreen: View {
     
     @EnvironmentObject private var nav: NavCoordinator
     @State private var showingAddExpense = false
+    @State private var showingBudgetEditor = false
+    @State private var budgetText = ""
     @StateObject private var viewModel: HomeViewModel
     private let expenses: ExpenseRepository
 
     static let creamBackground: Color = Color(red: 0.98, green: 0.96, blue: 0.90) // soft cream
 
-    init(expense: ExpenseRepository) {
+    init(expense: ExpenseRepository, budget: BudgetRepository) {
         self.expenses = expense
-        _viewModel = StateObject(wrappedValue: HomeViewModel(expenses: expense))
+        _viewModel = StateObject(wrappedValue: HomeViewModel(expenses: expense, budget: budget))
+    }
+
+    private func startEditingBudget() {
+        let current = viewModel.summary?.monthlyBudget ?? 0
+        budgetText = current > 0 ? current.formatted(.number.grouping(.never)) : ""
+        showingBudgetEditor = true
+    }
+
+    private func saveBudget() {
+        let cleaned = budgetText.filter { $0.isNumber || $0 == "." || $0 == "," }
+            .replacingOccurrences(of: ",", with: ".")
+        if let value = Double(cleaned), value > 0 {
+            viewModel.setMonthlyBudget(value)
+        }
     }
     
     private var populatedHome: some View {
@@ -32,7 +48,7 @@ struct HomeScreen: View {
                 .padding(.horizontal)
 
                 // Budget card
-                BudgetCardView(summary: viewModel.summary)
+                BudgetCardView(summary: viewModel.summary, onEdit: startEditingBudget)
                     .padding(.horizontal)
 
                 // Quick actions
@@ -85,6 +101,14 @@ struct HomeScreen: View {
             }
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
+        }
+        .alert("Monthly Budget", isPresented: $showingBudgetEditor) {
+            TextField("Amount", text: $budgetText)
+                .keyboardType(.decimalPad)
+            Button("Cancel", role: .cancel) {}
+            Button("Save", action: saveBudget)
+        } message: {
+            Text("How much do you want to spend each month?")
         }
         // The greeting header acts as the page title, so hide the (empty) nav bar.
         .toolbar(.hidden, for: .navigationBar)
@@ -167,6 +191,7 @@ private struct HeaderSectionView: View {
 //Budget card view
 private struct BudgetCardView: View {
     let summary: HomeSummary?
+    let onEdit: () -> Void
 
     // MARK: - Derived values (keep type-checking simple)
     private var budget: Double { summary?.monthlyBudget ?? 0 }
@@ -189,9 +214,18 @@ private struct BudgetCardView: View {
 
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Monthly Budget")
+                    Button(action: onEdit) {
+                        HStack(spacing: 6) {
+                            Text("Monthly Budget")
+                            Image(systemName: "pencil")
+                                .font(.caption.weight(.semibold))
+                        }
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Edit monthly budget")
+                    .accessibilityIdentifier("home.budget.edit")
 
                     Text(remaining.asCurrency())
                         .font(.title.bold())
@@ -469,5 +503,9 @@ private struct AddExpensePlaceholderView: View {
 }
 
 #Preview {
-    HomeScreen(expense: AppContainer(inMemory: true).expenses)
+    let container = AppContainer(inMemory: true)
+    NavigationStack {
+        HomeScreen(expense: container.expenses, budget: container.budget)
+    }
+    .environmentObject(NavCoordinator())
 }

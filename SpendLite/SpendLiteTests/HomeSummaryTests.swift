@@ -63,13 +63,54 @@ struct HomeSummaryTests {
         try await save(expense(40, on: date(2026, 11, 3)), to: repo)
         try await save(expense(999, on: date(2026, 10, 20)), to: repo)
 
-        let vm = HomeViewModel(expenses: repo, now: { self.date(2026, 11, 15) }, calendar: calendar)
+        let vm = HomeViewModel(expenses: repo, budget: freshBudget(), now: { self.date(2026, 11, 15) }, calendar: calendar)
 
         // The view model applies values on the main queue; wait until the summary arrives.
         let summary = try #require(await firstNonNil(vm.$summary))
         #expect(summary.totalSpent == 40)
         #expect(vm.hasAnyExpense)
         #expect(vm.recentExpenses.count == 2) // recent list is all-time, not just this month
+    }
+
+    // MARK: - Budget (F5)
+
+    @Test func budgetDefaultsTo2000AndPersists() {
+        let defaults = UserDefaults(suiteName: "test.\(UUID().uuidString)")!
+        let repo = UserDefaultsBudgetRepository(defaults: defaults)
+        var latest: Double?
+        let c = repo.monthlyBudgetPublisher.sink { latest = $0 }
+        #expect(latest == 2000)
+
+        repo.setMonthlyBudget(3500)
+        #expect(latest == 3500)
+        // A new repository on the same storage sees the saved value (survives app restarts).
+        var reloaded: Double?
+        let c2 = UserDefaultsBudgetRepository(defaults: defaults).monthlyBudgetPublisher.sink { reloaded = $0 }
+        #expect(reloaded == 3500)
+
+        repo.setMonthlyBudget(-10) // ignored
+        #expect(latest == 3500)
+        _ = (c, c2)
+    }
+
+    @Test func changingBudgetUpdatesHomeSummary() async throws {
+        let repo = CoreDataExpenseRepository(stack: CoreDataStack(inMemory: true))
+        try await save(expense(100, on: date(2026, 11, 3)), to: repo)
+        let budget = freshBudget()
+        let vm = HomeViewModel(expenses: repo, budget: budget, now: { self.date(2026, 11, 15) }, calendar: calendar)
+
+        vm.setMonthlyBudget(500)
+
+        var updated: HomeSummary?
+        for await value in vm.$summary.values where value?.monthlyBudget == 500 {
+            updated = value
+            break
+        }
+        #expect(updated?.remaining == 400)
+    }
+
+    private func freshBudget() -> BudgetRepository {
+        UserDefaultsBudgetRepository(defaults: UserDefaults(suiteName: "test.\(UUID().uuidString)")!)
     }
 
     // MARK: - Helpers

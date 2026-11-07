@@ -12,10 +12,17 @@ import Foundation
 final class AppContainer {
     let coreData: CoreDataStack
     let expenses: ExpenseRepository
-    
+    let budget: BudgetRepository
+
     init(inMemory: Bool = false) {
         self.coreData = CoreDataStack(inMemory: inMemory)
         self.expenses = CoreDataExpenseRepository(stack: coreData)
-        // Later: expenses repo, budget service, feature flags, etc.
+        // In-memory containers (previews/tests) get a throwaway defaults suite
+        // so they never read or overwrite the real budget.
+        let defaults = inMemory
+            ? UserDefaults(suiteName: "SpendLite.inMemory.\(UUID().uuidString)") ?? .standard
+            : .standard
+        self.budget = UserDefaultsBudgetRepository(defaults: defaults)
+        // Later: feature flags, etc.
     }
 }

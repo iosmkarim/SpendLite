@@ -17,7 +17,7 @@ struct TabShellView: View {
         TabView(selection: $nav.selectedTab) {
             // Home
             makeTab(.home, title: "Home", systemImage: "house.fill", navTitle: "Home") {
-                HomeScreen(expense: container.expenses)
+                HomeScreen(expense: container.expenses, budget: container.budget)
             }
 
             // Add expense
