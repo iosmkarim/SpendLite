@@ -23,6 +23,12 @@ struct HomeScreen: View {
         _viewModel = StateObject(wrappedValue: HomeViewModel(expenses: expense, budget: budget))
     }
 
+    private func openAddIfRequested() {
+        guard nav.addExpenseRequested else { return }
+        nav.addExpenseRequested = false
+        showingAddExpense = true
+    }
+
     private func startEditingBudget() {
         let current = viewModel.summary?.monthlyBudget ?? 0
         budgetText = current > 0 ? current.formatted(.number.grouping(.never)) : ""
@@ -92,6 +98,9 @@ struct HomeScreen: View {
                 )
             }
         }
+        // The widget's "Add expense" button opens the form straight away.
+        .onAppear(perform: openAddIfRequested)
+        .onChange(of: nav.addExpenseRequested) { _, _ in openAddIfRequested() }
         .sheet(isPresented: $showingAddExpense) {
             // A sheet is a new presentation, so it needs its own stack for the title and toolbar.
             NavigationStack {
