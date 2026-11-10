@@ -6,13 +6,16 @@
 import Foundation
 import Combine
 
-/// Drives the Transactions tab: every expense grouped by month, plus delete with undo.
+/// Drives the Transactions tab: every expense grouped by month (optionally one category),
+/// plus delete with undo.
 final class TransactionsViewModel: ObservableObject {
 
     @Published private(set) var sections: [TransactionSection] = []
     /// The expense just deleted, so the screen can offer Undo. Cleared on undo or dismiss.
     @Published private(set) var recentlyDeleted: ExpenseItem?
     @Published var errorMessage: String?
+    /// Show only this category, or everything when nil.
+    @Published var categoryFilter: ExpenseCategory?
 
     /// False until the first list arrives, so the empty state doesn't flash on launch.
     @Published private(set) var hasLoaded = false
@@ -26,7 +29,11 @@ final class TransactionsViewModel: ObservableObject {
         self.expenses = expenses
 
         expenses.expensesPublisher
-            .map { TransactionSection.byMonth($0, calendar: calendar) }
+            .combineLatest($categoryFilter)
+            .map { items, filter in
+                let shown = filter.map { category in items.filter { $0.categoryKind == category } } ?? items
+                return TransactionSection.byMonth(shown, calendar: calendar)
+            }
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
                 self?.sections = $0
