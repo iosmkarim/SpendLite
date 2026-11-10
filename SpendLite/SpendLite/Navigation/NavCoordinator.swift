@@ -18,8 +18,13 @@ final class NavCoordinator: ObservableObject {
 
     @Published var selectedTab: Tab = .home
 
-    /// Category the Transactions tab is filtered to (set from Insights), or nil for all.
-    @Published var transactionsFilter: ExpenseCategory?
+    /// What another screen asked the Transactions tab to show. The Transactions screen
+    /// applies it to its own filter and then clears it (so the user can change filters freely).
+    enum TransactionsRequest: Equatable {
+        case showAll
+        case category(ExpenseCategory)
+    }
+    @Published var transactionsRequest: TransactionsRequest?
 
     // MARK: - Navigation API
     func goToInsights() {
@@ -28,13 +33,13 @@ final class NavCoordinator: ObservableObject {
 
     /// Home's "See All" opens the full list.
     func goToTransactions() {
-        transactionsFilter = nil
+        transactionsRequest = .showAll
         selectedTab = .transactions
     }
 
     /// Insights → tap a category: open Transactions showing only that category.
     func goToTransactions(category: ExpenseCategory) {
-        transactionsFilter = category
+        transactionsRequest = .category(category)
         selectedTab = .transactions
     }
 }
