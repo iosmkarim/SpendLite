@@ -153,9 +153,8 @@ private struct EmptyHomeView: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .foregroundStyle(.white)
+                    .heroCardStyle(cornerRadius: 16)
             }
             .padding(.horizontal, 32)
             
@@ -263,9 +262,10 @@ private struct BudgetCardView: View {
         return summary.isOverBudget ? summary.amountOver : summary.remainingClamped
     }
 
+    /// Ring colour: brand purple while on track, then orange / red as a warning.
     private var statusColor: Color {
         switch status {
-        case .onTrack: return .green
+        case .onTrack: return .brand
         case .nearLimit: return .orange
         case .overBudget: return .red
         }
@@ -290,12 +290,23 @@ private struct BudgetCardView: View {
                     .accessibilityIdentifier("home.budget.edit")
 
                     Text(headlineAmount.asCurrency())
-                        .font(.title.bold())
+                        .font(.largeTitle.bold())
                         .foregroundStyle(status == .overBudget ? Color.red : Color.primary)
+                        .minimumScaleFactor(0.7)
+                        .lineLimit(1)
 
-                    Text(status == .overBudget ? "over budget" : "remaining")
-                        .font(.subheadline)
-                        .foregroundStyle(status == .overBudget ? Color.red : Color.secondary)
+                    if status == .overBudget {
+                        Label("over budget", systemImage: "exclamationmark.circle.fill")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(Color(uiColor: UIColor(hex: 0xE5484D)), in: Capsule())
+                    } else {
+                        Text("remaining")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
 
                     if status == .nearLimit {
                         Label("Close to your limit", systemImage: "exclamationmark.triangle.fill")
@@ -327,11 +338,10 @@ private struct BudgetCardView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
-            .background(Color.insetBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .background(Color.insetBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
-        .padding(18)
-        .cardStyle()
+        .padding(20)
+        .cardStyle(cornerRadius: 24)
     }
 }
 
@@ -346,7 +356,7 @@ private struct ProgressRingView: View {
         ZStack {
             Circle()
                 .stroke(lineWidth: 8)
-                .foregroundStyle(Color(.systemGray5))
+                .foregroundStyle(Color.brand.opacity(0.12))
 
             Circle()
                 .trim(from: 0, to: progress)
@@ -386,8 +396,7 @@ private struct QuickActionsGridView: View {
         HStack(spacing: 14) {
             QuickActionCard(
                 icon: "plus",
-                iconBackground: Color.blue.opacity(0.12),
-                iconForeground: .blue,
+                iconForeground: .brand,
                 title: "Add Expense",
                 subtitle: "Record new spending",
                 onTap: onAddExpense
@@ -396,8 +405,7 @@ private struct QuickActionsGridView: View {
 
             QuickActionCard(
                 icon: "chart.bar.xaxis",
-                iconBackground: Color.purple.opacity(0.12),
-                iconForeground: .purple,
+                iconForeground: .pink,
                 title: "View Insights",
                 subtitle: "Analyze spending",
                 onTap: onInsights
@@ -411,7 +419,6 @@ private struct QuickActionsGridView: View {
 
 private struct QuickActionCard: View {
     let icon: String
-    let iconBackground: Color
     let iconForeground: Color
     let title: String
     let subtitle: String
@@ -420,15 +427,10 @@ private struct QuickActionCard: View {
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(iconBackground)
-                        .frame(width: 44, height: 44)
-                    
-                    Image(systemName: icon)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(iconForeground)
-                }
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(iconForeground)
+                    .iconTile(iconForeground)
                 .accessibilityHidden(true) // decorative icon
 
                 Text(title)
@@ -449,7 +451,7 @@ private struct QuickActionCard: View {
             .frame(maxWidth: .infinity, minHeight: 140, alignment: .topLeading)
             .cardStyle()
             // Makes the whole card the tap target (not just the visible content).
-            .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
         .buttonStyle(.pressableCard)
         .accessibilityLabel(title)

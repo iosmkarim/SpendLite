@@ -106,8 +106,8 @@ private struct SegmentedButton: View {
                 .font(.subheadline.weight(.semibold))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(isSelected ? Color.blue.opacity(0.12) : Color.insetBackground)
-                .foregroundStyle(isSelected ? .blue : .primary)
+                .background(isSelected ? Color.brand.opacity(0.14) : Color.insetBackground)
+                .foregroundStyle(isSelected ? Color.brand : .primary)
                 .clipShape(Capsule())
         }
         .buttonStyle(.plain)

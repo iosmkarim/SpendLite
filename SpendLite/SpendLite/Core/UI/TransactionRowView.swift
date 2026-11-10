@@ -14,15 +14,10 @@ struct TransactionRowView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(category.color.opacity(0.12))
-                    .frame(width: 44, height: 44)
-
-                Image(systemName: category.systemImage)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(category.color)
-            }
+            Image(systemName: category.systemImage)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(category.color)
+                .iconTile(category.color)
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(item.title)

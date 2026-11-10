@@ -93,25 +93,29 @@ struct AddExpenseAmountOnlyView: View {
                             .foregroundStyle(.red)
                     }
                 }
+                .listRowBackground(Color.formRowBackground)
                 Section("Description") {
                     ZStack(alignment: .topLeading) {
                         TextEditor(text: $descriptionText)
                             .frame(minHeight: 80)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.secondary.opacity(0.2))
-                            )
                             .scrollContentBackground(.hidden)
 
+                        // TextEditor already insets its text by ~5pt × 8pt; match that so
+                        // the placeholder sits exactly where typing starts.
                         if descriptionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                             Text("What did you spend on?")
                                 .foregroundStyle(.secondary)
-                                .padding(.horizontal, 15)
-                                .padding(.vertical, 10)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 8)
+                                .allowsHitTesting(false)
                         }
                     }
+                    // Same left inset as the Amount field, so typed text doesn't touch the edge.
+                    .padding(.horizontal, 15)
+                    .padding(.vertical, 6)
                     .listRowInsets(EdgeInsets())
                 }
+                .listRowBackground(Color.formRowBackground)
                 Section("Category") {
                     VStack(alignment: .leading, spacing: 12) {
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
@@ -160,6 +164,7 @@ struct AddExpenseAmountOnlyView: View {
                     }
                     .padding(.vertical, 4)
                 }
+                .listRowBackground(Color.formRowBackground)
                 
                 Section("Date") {
                     Button {
@@ -188,6 +193,7 @@ struct AddExpenseAmountOnlyView: View {
                             .transition(.opacity.combined(with: .move(edge: .top)))
                     }
                 }
+                .listRowBackground(Color.formRowBackground)
             }
             .scrollContentBackground(.hidden)
             .onChange(of: showDatePicker) { oldValue, newValue in
