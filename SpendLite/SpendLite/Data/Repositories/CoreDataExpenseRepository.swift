@@ -36,7 +36,8 @@ import Combine
  
  * HomeViewModel
  * Add Expense flow
- * Future features like History, Insights and Search
+ * TransactionsViewModel (list, edit, delete)
+ * Future features like Insights and Search
  
  Notes:
  
@@ -61,46 +62,96 @@ final class CoreDataExpenseRepository: ExpenseRepository {
         expensesSubject.send(fetchAllExpenses())
     }
     
-    func addSampleExpense() -> AnyPublisher<Void, Error> {
-        Future<Void, Error> { [weak stack] promise in
-            guard let context = stack?.viewContext else {
+    func addExpense(_ expense: ExpenseItem) -> AnyPublisher<Void, Error> {
+        performChange { context in
+            guard let entity = NSEntityDescription.entity(forEntityName: "Expense", in: context) else {
+                throw RepositoryError.missingEntity
+            }
+            let obj = NSManagedObject(entity: entity, insertInto: context)
+            Self.apply(expense, to: obj)
+        }
+    }
+
+    func updateExpense(_ expense: ExpenseItem) -> AnyPublisher<Void, Error> {
+        performChange { context in
+            guard let obj = try Self.object(withID: expense.id, in: context) else {
+                throw RepositoryError.notFound
+            }
+            Self.apply(expense, to: obj)
+        }
+    }
+
+    func deleteExpense(id: UUID) -> AnyPublisher<Void, Error> {
+        performChange { context in
+            if let obj = try Self.object(withID: id, in: context) {
+                context.delete(obj)
+            }
+        }
+    }
+
+    // MARK: - Helpers
+
+    enum RepositoryError: LocalizedError {
+        case missingEntity
+        case notFound
+
+        var errorDescription: String? {
+            switch self {
+            case .missingEntity: "Missing Expense entity"
+            case .notFound: "This expense no longer exists."
+            }
+        }
+    }
+
+    /// Runs `change` on the view context, saves, and re-emits the full list.
+    /// On failure the context is rolled back so a half-made change can't be saved later.
+    private func performChange(_ change: @escaping (NSManagedObjectContext) throws -> Void) -> AnyPublisher<Void, Error> {
+        Future<Void, Error> { [weak self] promise in
+            guard let self else {
                 promise(.failure(NSError(domain: "CoreData", code: -1, userInfo: [NSLocalizedDescriptionKey: "Missing context"])))
                 return
             }
+            let context = self.stack.viewContext
             context.perform {
-                guard let entity = NSEntityDescription.entity(forEntityName: "Expense", in: context) else {
-                    promise(.failure(NSError(domain: "CoreData", code: -2, userInfo: [NSLocalizedDescriptionKey: "Missing Expense entity"])))
-                    return
-                }
-                
-                let obj = NSManagedObject(entity: entity,
-                                          insertInto: context)
-                obj.setValue(UUID(), forKey: "id")
-                obj.setValue(Date(), forKey: "date")
-                obj.setValue("Sample Coffee", forKey: "title")
-                obj.setValue(5.40, forKey: "amount")
-                obj.setValue("Food & Drink", forKey: "category")
-                
                 do {
-                    try context.save()
-                    let latest = self.fetchAllExpenses()
-                    self.expensesSubject.send(latest)
+                    try change(context)
+                    if context.hasChanges { try context.save() }
+                    self.expensesSubject.send(self.fetchAllExpenses())
                     promise(.success(()))
-                }catch{
+                } catch {
+                    context.rollback()
                     promise(.failure(error))
                 }
-                
             }
         }
         .eraseToAnyPublisher()
     }
-    
-    func hasAnyExpense() -> AnyPublisher<Bool, Never> {
-        // keep it simple - run a small fetch on a background queue
-        expensesPublisher
-            .map { !$0.isEmpty }
-            .removeDuplicates()
-            .eraseToAnyPublisher()
+
+    private static func apply(_ expense: ExpenseItem, to obj: NSManagedObject) {
+        obj.setValue(expense.id, forKey: "id")
+        obj.setValue(expense.date, forKey: "date")
+        obj.setValue(expense.title, forKey: "title")
+        obj.setValue(expense.amount, forKey: "amount")
+        obj.setValue(expense.category, forKey: "category")
+    }
+
+    private static func object(withID id: UUID, in context: NSManagedObjectContext) throws -> NSManagedObject? {
+        let request = NSFetchRequest<NSManagedObject>(entityName: "Expense")
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        request.fetchLimit = 1
+        return try context.fetch(request).first
+    }
+
+    func addSampleExpense() -> AnyPublisher<Void, Error> {
+        addExpense(
+            ExpenseItem(
+                id: UUID(),
+                date: Date(),
+                title: "Sample Coffee",
+                amount: 5.40,
+                category: ExpenseCategory.food.rawValue
+            )
+        )
     }
     
     private func fetchAllExpenses() -> [ExpenseItem] {
