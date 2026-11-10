@@ -9,6 +9,7 @@ import SwiftUI
 /// Tap a row to edit it, swipe left to delete (with Undo), + to add.
 struct TransactionsScreen: View {
     @StateObject private var viewModel: TransactionsViewModel
+    @EnvironmentObject private var nav: NavCoordinator
     @State private var activeSheet: Sheet?
 
     private let expenses: ExpenseRepository
@@ -32,12 +33,23 @@ struct TransactionsScreen: View {
     }
 
     var body: some View {
+        // The list must stay the root scroll view, or the large "Transactions" title disappears;
+        // that's why the filter chip is a row inside the list rather than above it.
         Group {
             if viewModel.isEmpty {
-                emptyState
+                if let filter = viewModel.categoryFilter {
+                    filteredEmptyState(filter)
+                } else {
+                    emptyState
+                }
             } else {
                 list
             }
+        }
+        // The filter lives in NavCoordinator so Insights can set it before switching tabs.
+        .onAppear { viewModel.categoryFilter = nav.transactionsFilter }
+        .onChange(of: nav.transactionsFilter) { _, newValue in
+            withAnimation(.snappy) { viewModel.categoryFilter = newValue }
         }
         .background(Color.appBackground.ignoresSafeArea())
         .navigationTitle("Transactions")
@@ -95,6 +107,12 @@ struct TransactionsScreen: View {
 
     private var list: some View {
         List {
+            if let filter = viewModel.categoryFilter {
+                FilterBar(category: filter) { nav.transactionsFilter = nil }
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+            }
             ForEach(viewModel.sections) { section in
                 Section {
                     ForEach(section.items) { item in
@@ -144,7 +162,18 @@ struct TransactionsScreen: View {
         .accessibilityAction(named: "Delete") { viewModel.delete(item) }
     }
 
-    // MARK: - Empty state
+    // MARK: - Empty states
+
+    private func filteredEmptyState(_ category: ExpenseCategory) -> some View {
+        ContentUnavailableView {
+            Label("No \(category.name) expenses", systemImage: category.systemImage)
+        } description: {
+            Text("Nothing in this category yet.")
+        } actions: {
+            Button("Show all") { nav.transactionsFilter = nil }
+        }
+        .frame(maxHeight: .infinity)
+    }
 
     private var emptyState: some View {
         ContentUnavailableView {
@@ -159,6 +188,39 @@ struct TransactionsScreen: View {
 }
 
 // MARK: - Pieces
+
+/// "Showing: 🍴 Food ✕" above the list when a category filter is on.
+private struct FilterBar: View {
+    let category: ExpenseCategory
+    let onClear: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text("Showing")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Button(action: onClear) {
+                HStack(spacing: 6) {
+                    Image(systemName: category.systemImage)
+                    Text(category.name)
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(category.color.opacity(0.6))
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(category.color)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(category.color.opacity(0.12), in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Filtered to \(category.name). Clear filter")
+            .accessibilityIdentifier("transactions.filter.clear")
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
+    }
+}
 
 private struct SectionHeader: View {
     let section: TransactionSection
@@ -207,10 +269,12 @@ private struct UndoBanner: View {
     NavigationStack {
         TransactionsScreen(expenses: AppContainer.preview().expenses)
     }
+    .environmentObject(NavCoordinator())
 }
 
 #Preview("Empty") {
     NavigationStack {
         TransactionsScreen(expenses: AppContainer(inMemory: true).expenses)
     }
+    .environmentObject(NavCoordinator())
 }

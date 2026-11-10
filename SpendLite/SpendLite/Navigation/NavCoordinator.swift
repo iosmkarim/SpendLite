@@ -18,6 +18,9 @@ final class NavCoordinator: ObservableObject {
 
     @Published var selectedTab: Tab = .home
 
+    /// Category the Transactions tab is filtered to (set from Insights), or nil for all.
+    @Published var transactionsFilter: ExpenseCategory?
+
     // MARK: - Navigation API
     func goToInsights() {
         selectedTab = .insights
@@ -25,6 +28,13 @@ final class NavCoordinator: ObservableObject {
 
     /// Home's "See All" opens the full list.
     func goToTransactions() {
+        transactionsFilter = nil
+        selectedTab = .transactions
+    }
+
+    /// Insights → tap a category: open Transactions showing only that category.
+    func goToTransactions(category: ExpenseCategory) {
+        transactionsFilter = category
         selectedTab = .transactions
     }
 }

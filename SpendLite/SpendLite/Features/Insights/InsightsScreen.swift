@@ -1,8 +1,17 @@
-import SwiftUI
-import Combine
+//
+//  InsightsScreen.swift
+//  SpendLite
+//
 
+import SwiftUI
+import Charts
+
+/// The Insights tab: where the money went in a period, built only from real expenses.
+/// Total with a comparison to the previous period, a category donut (tap a category to see
+/// those transactions), and a daily/weekly spending chart.
 struct InsightsScreen: View {
     @StateObject private var viewModel: InsightsViewModel
+    @EnvironmentObject private var nav: NavCoordinator
 
     init(expense: ExpenseRepository) {
         _viewModel = StateObject(wrappedValue: InsightsViewModel(expenses: expense))
@@ -11,190 +20,291 @@ struct InsightsScreen: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                // Header
-                Text("Spending Insights")
-                    .font(.largeTitle.bold())
-                    .padding(.horizontal)
+                Picker("Period", selection: $viewModel.period) {
+                    ForEach(InsightsPeriod.allCases) { period in
+                        Text(period.title).tag(period)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("insights.period")
 
-                // Range picker
-                RangePicker(selection: $viewModel.range)
-                    .padding(.horizontal)
-
-                // Total spending card
-                TotalSpendingCard(totalText: viewModel.totalFormatted, deltaText: viewModel.deltaText)
-                    .padding(.horizontal)
-
-                // Categories card
-                CategoriesCard(items: viewModel.categoryBreakdown)
-                    .padding(.horizontal)
-
-                Spacer(minLength: 12)
+                if let summary = viewModel.summary {
+                    if summary.isEmpty {
+                        emptyState
+                    } else {
+                        TotalCard(
+                            summary: summary,
+                            periodLabel: viewModel.periodLabel,
+                            comparisonLabel: viewModel.comparisonLabel,
+                            averagePerDay: viewModel.averagePerDay
+                        )
+                        CategoriesCard(summary: summary) { category in
+                            nav.goToTransactions(category: category)
+                        }
+                        TrendCard(summary: summary)
+                    }
+                }
             }
-            .padding(.vertical, 16)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .animation(.snappy, value: viewModel.period)
         }
         .scrollIndicators(.hidden)
-        .background(Color.appBackground)
+        .background(Color.appBackground.ignoresSafeArea())
         .navigationTitle("Insights")
         .navigationBarTitleDisplayMode(.large)
-        .onAppear { viewModel.onAppear() }
-    }
-}
-
-// MARK: - ViewModel (scoped placeholder)
-@MainActor
-final class InsightsViewModel: SwiftUI.ObservableObject {
-    enum Range: Equatable { case last7Days, thisMonth }
-
-    @Published var range: Range = .thisMonth { didSet { refresh() } }
-    @Published private(set) var total: Decimal = 0
-    @Published private(set) var categoryBreakdown: [(name: String, amount: Decimal)] = []
-
-    private let expenses: ExpenseRepository
-
-    init(expenses: ExpenseRepository) {
-        self.expenses = expenses
+        // Re-reads "now" so "This month" is current after the app has been in the background.
+        .onAppear { viewModel.refresh() }
     }
 
-    func onAppear() { refresh() }
-
-    func refresh() {
-        // TODO: Query repository by date range. For now, placeholder values so UI can be tested.
-        switch range {
-        case .last7Days:
-            total = 684
-            categoryBreakdown = [("Food & Dining", 220), ("Transport", 95), ("Shopping", 160), ("Entertainment", 80)]
-        case .thisMonth:
-            total = 2847
-            categoryBreakdown = [("Food & Dining", 987), ("Transportation", 365), ("Entertainment", 420), ("Shopping", 267)]
+    private var emptyState: some View {
+        ContentUnavailableView {
+            Label("No spending yet", systemImage: "chart.pie")
+        } description: {
+            Text("Nothing was spent in \(viewModel.periodLabel). Add a few expenses to see where your money goes.")
         }
+        .padding(.top, 40)
     }
-
-    var totalFormatted: String { total.asCurrency() }
-    var deltaText: String { range == .thisMonth ? "↑ 12%" : "↑ 4%" }
 }
 
-// MARK: - RangePicker
-private struct RangePicker: View {
-    @Binding var selection: InsightsViewModel.Range
+// MARK: - Total
+
+private struct TotalCard: View {
+    let summary: InsightsSummary
+    let periodLabel: String
+    let comparisonLabel: String
+    let averagePerDay: Double
 
     var body: some View {
-        HStack(spacing: 8) {
-            SegmentedButton("Last 7 days", isSelected: selection == .last7Days) {
-                selection = .last7Days
-            }
-            SegmentedButton("This month", isSelected: selection == .thisMonth) {
-                selection = .thisMonth
-            }
-        }
-    }
-}
-
-private struct SegmentedButton: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    init(_ title: String, isSelected: Bool, action: @escaping () -> Void) {
-        self.title = title
-        self.isSelected = isSelected
-        self.action = action
-    }
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.subheadline.weight(.semibold))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(isSelected ? Color.brand.opacity(0.14) : Color.insetBackground)
-                .foregroundStyle(isSelected ? Color.brand : .primary)
-                .clipShape(Capsule())
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// MARK: - Cards
-private struct TotalSpendingCard: View {
-    let totalText: String
-    let deltaText: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Total Spending")
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Total spent")
                     .font(.headline)
                 Spacer()
-                Text(deltaText)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.green)
+                Text(periodLabel)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
 
-            Text(totalText)
-                .font(.title.bold())
+            Text(summary.total.asCurrency())
+                .font(.largeTitle.bold())
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
+                .accessibilityIdentifier("insights.total")
 
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.insetBackground)
-                .frame(height: 160)
+            ChangeChip(change: summary.changeFromPrevious, comparisonLabel: comparisonLabel)
+
+            Divider().padding(.vertical, 2)
+
+            HStack {
+                Stat(title: "Per day", value: averagePerDay.asCurrency())
+                Spacer()
+                Stat(title: "Transactions", value: "\(summary.transactionCount)")
+                Spacer()
+                Stat(title: "Top category", value: summary.categories.first?.category.name ?? "–")
+            }
         }
-        .padding(16)
+        .padding(18)
         .cardStyle()
     }
 }
 
-private struct CategoriesCard: View {
-    let items: [(name: String, amount: Decimal)]
+/// "↓ 8% vs Oct 1 – 9". Spending less is good (green); more is a warning (red).
+private struct ChangeChip: View {
+    let change: Double?
+    let comparisonLabel: String
 
     var body: some View {
-        // Break complex builder into smaller constants to help type-checker
-        let header = HStack {
-            Text("Categories")
+        if let change {
+            let isUp = change > 0
+            let color: Color = abs(change) < 0.005 ? .secondary : (isUp ? .red : .green)
+            HStack(spacing: 4) {
+                Image(systemName: isUp ? "arrow.up.right" : "arrow.down.right")
+                Text(abs(change).formatted(.percent.precision(.fractionLength(0))))
+                Text("vs \(comparisonLabel)")
+                    .foregroundStyle(.secondary)
+                    .fontWeight(.regular)
+            }
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(color)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(isUp ? "Up" : "Down") \(abs(change).formatted(.percent.precision(.fractionLength(0)))) compared with \(comparisonLabel)")
+        } else {
+            Text("Nothing spent in \(comparisonLabel) to compare with")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+private struct Stat: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+// MARK: - Categories
+
+private struct CategoriesCard: View {
+    let summary: InsightsSummary
+    let onSelect: (ExpenseCategory) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("By category")
                 .font(.headline)
-            Spacer()
-            Button(action: {}) {
-                Text("View all categories")
-                    .font(.subheadline.weight(.semibold))
+
+            Chart(summary.categories) { item in
+                SectorMark(
+                    angle: .value("Amount", item.total),
+                    innerRadius: .ratio(0.62),
+                    angularInset: 1.5
+                )
+                .cornerRadius(4)
+                .foregroundStyle(item.category.color)
+            }
+            .chartLegend(.hidden)
+            .chartBackground { _ in
+                VStack(spacing: 2) {
+                    Text("\(summary.categories.count)")
+                        .font(.title2.bold())
+                    Text(summary.categories.count == 1 ? "category" : "categories")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(height: 180)
+            .accessibilityHidden(true) // the rows below carry the same information
+
+            VStack(spacing: 4) {
+                ForEach(summary.categories) { item in
+                    Button { onSelect(item.category) } label: {
+                        CategoryRow(item: item)
+                    }
+                    .buttonStyle(.pressableCard)
+                    .accessibilityHint("Shows these transactions")
+                    .accessibilityIdentifier("insights.category.\(item.category.rawValue)")
+                }
             }
         }
-
-        let list = VStack(spacing: 10) {
-            ForEach(items.prefix(5), id: \.name) { item in
-                CategoryRow(name: item.name, amount: item.amount)
-            }
-        }
-
-        return VStack(alignment: .leading, spacing: 12) {
-            header
-            list
-        }
-        .padding(16)
+        .padding(18)
         .cardStyle()
     }
 }
 
 private struct CategoryRow: View {
-    let name: String
-    let amount: Decimal
+    let item: InsightsSummary.CategoryShare
+
+    private var percent: String {
+        item.share.formatted(.percent.precision(.fractionLength(0)))
+    }
 
     var body: some View {
-        // Extracted row to reduce complexity inside ForEach
-        HStack {
-            Text(name)
-            Spacer()
-            Text(amount.asCurrency())
-                .font(.subheadline.weight(.semibold))
+        HStack(spacing: 12) {
+            Image(systemName: item.category.systemImage)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(item.category.color)
+                .iconTile(item.category.color, size: 36, cornerRadius: 11)
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(item.category.name)
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Text(item.total.asCurrency())
+                        .font(.subheadline.weight(.semibold))
+                        .monospacedDigit()
+                }
+                // Share of the total as a bar.
+                GeometryReader { proxy in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color.insetBackground)
+                        Capsule()
+                            .fill(item.category.color)
+                            .frame(width: max(4, proxy.size.width * item.share))
+                    }
+                }
+                .frame(height: 6)
+            }
+
+            Text(percent)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+                .frame(minWidth: 36, alignment: .trailing)
+
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
         }
-        .padding(12)
-        .background(Color.insetBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Color(.separator).opacity(0.35), lineWidth: 1)
-        )
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(item.category.name), \(item.total.asCurrency()), \(percent) of spending, \(item.count) \(item.count == 1 ? "transaction" : "transactions")")
+    }
+}
+
+// MARK: - Trend
+
+private struct TrendCard: View {
+    let summary: InsightsSummary
+
+    private var isWeekly: Bool { summary.trendUnit == .weekOfYear }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text(isWeekly ? "Weekly spending" : "Daily spending")
+                .font(.headline)
+
+            Chart(summary.trend) { point in
+                BarMark(
+                    x: .value(isWeekly ? "Week" : "Day", point.start, unit: summary.trendUnit),
+                    y: .value("Spent", point.total)
+                )
+                .cornerRadius(3)
+                .foregroundStyle(Color.brand.gradient)
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading) { value in
+                    AxisGridLine()
+                    AxisValueLabel {
+                        if let amount = value.as(Double.self) {
+                            Text(amount.formatted(.currency(code: Currency.code).precision(.fractionLength(0))))
+                        }
+                    }
+                }
+            }
+            .chartXAxis {
+                AxisMarks(values: .stride(by: summary.trendUnit, count: isWeekly ? 2 : 7)) { _ in
+                    AxisGridLine()
+                    AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+                }
+            }
+            .frame(height: 180)
+            .accessibilityLabel(isWeekly ? "Weekly spending chart" : "Daily spending chart")
+        }
+        .padding(18)
+        .cardStyle()
     }
 }
 
 // MARK: - Preview
+
 #Preview {
-    InsightsScreen(expense: AppContainer(inMemory: true).expenses)
+    NavigationStack {
+        InsightsScreen(expense: AppContainer.preview().expenses)
+    }
+    .environmentObject(NavCoordinator())
 }
