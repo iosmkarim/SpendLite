@@ -26,6 +26,18 @@ final class NavCoordinator: ObservableObject {
     }
     @Published var transactionsRequest: TransactionsRequest?
 
+    /// Set when the widget's "Add expense" opens the app; Home shows the form and clears it.
+    @Published var addExpenseRequested = false
+
+    /// Handles links from the widget: spendlite://add and spendlite://home.
+    func handle(_ url: URL) {
+        guard url.scheme == "spendlite" else { return }
+        selectedTab = .home
+        if url.host == "add" {
+            addExpenseRequested = true
+        }
+    }
+
     // MARK: - Navigation API
     func goToInsights() {
         selectedTab = .insights

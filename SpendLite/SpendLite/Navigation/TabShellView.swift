@@ -43,6 +43,8 @@ struct TabShellView: View {
         }
         .id(currencyCode)
         .environmentObject(nav)
+        .onOpenURL { nav.handle($0) }
+        .onChange(of: currencyCode) { _, _ in container.widgetSync?.refresh() }
         // Add any recurring expenses that came due while the app was closed or in the background.
         .onChange(of: scenePhase, initial: true) { _, phase in
             guard phase == .active else { return }
