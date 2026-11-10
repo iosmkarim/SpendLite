@@ -15,10 +15,11 @@ struct HomeScreen: View {
     @State private var budgetText = ""
     @StateObject private var viewModel: HomeViewModel
     private let expenses: ExpenseRepository
+    private let recurring: RecurringExpenseRepository?
 
-
-    init(expense: ExpenseRepository, budget: BudgetRepository) {
+    init(expense: ExpenseRepository, budget: BudgetRepository, recurring: RecurringExpenseRepository? = nil) {
         self.expenses = expense
+        self.recurring = recurring
         _viewModel = StateObject(wrappedValue: HomeViewModel(expenses: expense, budget: budget))
     }
 
@@ -94,7 +95,7 @@ struct HomeScreen: View {
         .sheet(isPresented: $showingAddExpense) {
             // A sheet is a new presentation, so it needs its own stack for the title and toolbar.
             NavigationStack {
-                AddExpenseAmountOnlyView(expenses: expenses, isPresentedAsSheet: true)
+                AddExpenseAmountOnlyView(expenses: expenses, recurring: recurring, isPresentedAsSheet: true)
             }
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)

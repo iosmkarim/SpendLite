@@ -9,6 +9,8 @@ struct AddExpenseAmountOnlyView: View {
     @State private var selectedCategory: ExpenseCategory? = nil
     @State private var selectedDate: Date = .now
     @State private var showDatePicker: Bool = false
+    /// nil = doesn't repeat.
+    @State private var repeatFrequency: RecurringExpense.Frequency?
 
     /// True when shown in a sheet: adds a Cancel button and closes itself after saving.
     private let isPresentedAsSheet: Bool
@@ -21,10 +23,13 @@ struct AddExpenseAmountOnlyView: View {
     init(
         expenses: ExpenseRepository,
         editing: ExpenseItem? = nil,
+        recurring: RecurringExpenseRepository? = nil,
+        initialRepeat: RecurringExpense.Frequency? = nil,
         isPresentedAsSheet: Bool = false,
         onSaved: (() -> Void)? = nil
     ) {
-        _viewModel = StateObject(wrappedValue: AddExpenseViewModel(expenses: expenses, editing: editing))
+        _viewModel = StateObject(wrappedValue: AddExpenseViewModel(expenses: expenses, editing: editing, recurring: recurring))
+        _repeatFrequency = State(initialValue: initialRepeat)
         self.isPresentedAsSheet = isPresentedAsSheet
         self.onSaved = onSaved
         if let editing {
@@ -42,7 +47,8 @@ struct AddExpenseAmountOnlyView: View {
             amount: amount,
             description: descriptionText,
             category: selectedCategory?.name,
-            date: selectedDate
+            date: selectedDate,
+            repeats: repeatFrequency
         ) {
             if !viewModel.isEditing { resetForm() }
             onSaved?()
@@ -56,6 +62,7 @@ struct AddExpenseAmountOnlyView: View {
         selectedCategory = nil
         selectedDate = .now
         showDatePicker = false
+        repeatFrequency = nil
     }
     
     /// Shared with Home/Transactions so icons and colours match everywhere.
@@ -194,6 +201,27 @@ struct AddExpenseAmountOnlyView: View {
                     }
                 }
                 .listRowBackground(Color.formRowBackground)
+
+                if viewModel.canRepeat {
+                    Section {
+                        Picker(selection: $repeatFrequency) {
+                            Text("Never").tag(RecurringExpense.Frequency?.none)
+                            ForEach(RecurringExpense.Frequency.allCases) { frequency in
+                                Text(frequency.title).tag(Optional(frequency))
+                            }
+                        } label: {
+                            Label("Repeat", systemImage: "arrow.triangle.2.circlepath")
+                        }
+                        .accessibilityIdentifier("addExpense.repeat")
+                    } header: {
+                        Text("Repeat")
+                    } footer: {
+                        if let repeatFrequency {
+                            Text("Added automatically \(repeatFrequency.title.lowercased()) from \(selectedDate.formatted(.dateTime.month(.abbreviated).day())). Manage in Settings → Recurring expenses.")
+                        }
+                    }
+                    .listRowBackground(Color.formRowBackground)
+                }
             }
             .scrollContentBackground(.hidden)
             .onChange(of: showDatePicker) { oldValue, newValue in

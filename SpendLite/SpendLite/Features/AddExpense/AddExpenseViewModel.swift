@@ -18,19 +18,29 @@ final class AddExpenseViewModel: ObservableObject {
     var isEditing: Bool { editing != nil }
 
     private let expenses: ExpenseRepository
+    /// Needed to create repeating expenses; nil hides the Repeat option.
+    let recurring: RecurringExpenseRepository?
     private var cancellables = Set<AnyCancellable>()
 
-    init(expenses: ExpenseRepository, editing: ExpenseItem? = nil) {
+    /// Repeating is offered only when adding (an edit changes just that one expense).
+    var canRepeat: Bool { recurring != nil && !isEditing }
+
+    init(expenses: ExpenseRepository, editing: ExpenseItem? = nil, recurring: RecurringExpenseRepository? = nil) {
         self.expenses = expenses
         self.editing = editing
+        self.recurring = recurring
     }
 
     /// Saves the expense (adds, or updates `editing`). Calls `onSuccess` on the main thread once stored.
+    /// With `repeats`, it creates a recurring expense starting on `date` instead; that adds this
+    /// first expense itself (if the date has arrived) and future ones automatically.
     func save(
         amount: Decimal,
         description: String,
         category: String?,
         date: Date,
+        repeats: RecurringExpense.Frequency? = nil,
+        now: Date = .now,
         onSuccess: @escaping () -> Void
     ) {
         guard !isSaving, amount > 0 else { return }
@@ -50,7 +60,23 @@ final class AddExpenseViewModel: ObservableObject {
         isSaving = true
         errorMessage = nil
 
-        let operation = isEditing ? expenses.updateExpense(item) : expenses.addExpense(item)
+        let operation: AnyPublisher<Void, Error>
+        if let repeats, canRepeat, let recurring {
+            operation = recurring.add(
+                RecurringExpense(
+                    title: item.title,
+                    amount: item.amount,
+                    category: item.category,
+                    frequency: repeats,
+                    startDate: date
+                ),
+                now: now
+            )
+        } else if isEditing {
+            operation = expenses.updateExpense(item)
+        } else {
+            operation = expenses.addExpense(item)
+        }
         operation
             .receive(on: DispatchQueue.main)
             .sink { [weak self] completion in

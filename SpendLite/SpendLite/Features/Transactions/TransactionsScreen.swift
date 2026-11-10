@@ -13,9 +13,11 @@ struct TransactionsScreen: View {
     @State private var activeSheet: Sheet?
 
     private let expenses: ExpenseRepository
+    private let recurring: RecurringExpenseRepository?
 
-    init(expenses: ExpenseRepository) {
+    init(expenses: ExpenseRepository, recurring: RecurringExpenseRepository? = nil) {
         self.expenses = expenses
+        self.recurring = recurring
         _viewModel = StateObject(wrappedValue: TransactionsViewModel(expenses: expenses))
     }
 
@@ -75,7 +77,7 @@ struct TransactionsScreen: View {
             NavigationStack {
                 switch sheet {
                 case .add:
-                    AddExpenseAmountOnlyView(expenses: expenses, isPresentedAsSheet: true)
+                    AddExpenseAmountOnlyView(expenses: expenses, recurring: recurring, isPresentedAsSheet: true)
                 case .edit(let item):
                     AddExpenseAmountOnlyView(expenses: expenses, editing: item, isPresentedAsSheet: true)
                 }

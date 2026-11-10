@@ -17,7 +17,12 @@ struct SettingsScreen: View {
     @State private var budgetText = ""
     @State private var showingDeleteConfirmation = false
 
-    init(expenses: ExpenseRepository, budget: BudgetRepository) {
+    private let expenses: ExpenseRepository
+    private let recurring: RecurringExpenseRepository?
+
+    init(expenses: ExpenseRepository, budget: BudgetRepository, recurring: RecurringExpenseRepository? = nil) {
+        self.expenses = expenses
+        self.recurring = recurring
         _viewModel = StateObject(wrappedValue: SettingsViewModel(expenses: expenses, budget: budget))
     }
 
@@ -86,10 +91,21 @@ struct SettingsScreen: View {
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("settings.budget")
+
+            if let recurring {
+                NavigationLink {
+                    RecurringListScreen(recurring: recurring, expenses: expenses)
+                } label: {
+                    SettingsRow(icon: "arrow.triangle.2.circlepath", color: .orange, title: "Recurring expenses") {
+                        EmptyView()
+                    }
+                }
+                .accessibilityIdentifier("settings.recurring")
+            }
         } header: {
             Text("Budget")
         } footer: {
-            Text("Home shows how much of this is left each month.")
+            Text("Home shows how much of your budget is left each month. Recurring expenses (rent, subscriptions) are added automatically.")
         }
         .listRowBackground(Color.formRowBackground)
     }
