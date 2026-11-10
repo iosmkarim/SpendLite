@@ -55,11 +55,22 @@ final class CoreDataExpenseRepository: ExpenseRepository {
     private let stack: CoreDataStack
     // live publisher storage
     private let expensesSubject = CurrentValueSubject<[ExpenseItem],Never>([])
+    private var cancellables = Set<AnyCancellable>()
     
     init(stack: CoreDataStack) {
         self.stack = stack
         //seed initial value (so home shows correct state at launch)
         expensesSubject.send(fetchAllExpenses())
+
+        // Re-emit after *any* save to the context, including ones made elsewhere
+        // (e.g. the recurring-expense generator adding this month's rent).
+        NotificationCenter.default
+            .publisher(for: NSManagedObjectContext.didSaveObjectsNotification, object: stack.viewContext)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                self.expensesSubject.send(self.fetchAllExpenses())
+            }
+            .store(in: &cancellables)
     }
     
     func addExpense(_ expense: ExpenseItem) -> AnyPublisher<Void, Error> {
@@ -114,7 +125,7 @@ final class CoreDataExpenseRepository: ExpenseRepository {
         }
     }
 
-    /// Runs `change` on the view context, saves, and re-emits the full list.
+    /// Runs `change` on the view context and saves (the save notification re-emits the list).
     /// On failure the context is rolled back so a half-made change can't be saved later.
     private func performChange(_ change: @escaping (NSManagedObjectContext) throws -> Void) -> AnyPublisher<Void, Error> {
         Future<Void, Error> { [weak self] promise in
@@ -127,7 +138,6 @@ final class CoreDataExpenseRepository: ExpenseRepository {
                 do {
                     try change(context)
                     if context.hasChanges { try context.save() }
-                    self.expensesSubject.send(self.fetchAllExpenses())
                     promise(.success(()))
                 } catch {
                     context.rollback()
@@ -144,6 +154,7 @@ final class CoreDataExpenseRepository: ExpenseRepository {
         obj.setValue(expense.title, forKey: "title")
         obj.setValue(expense.amount, forKey: "amount")
         obj.setValue(expense.category, forKey: "category")
+        obj.setValue(expense.recurringID, forKey: "recurringID")
     }
 
     private static func object(withID id: UUID, in context: NSManagedObjectContext) throws -> NSManagedObject? {
@@ -180,7 +191,10 @@ final class CoreDataExpenseRepository: ExpenseRepository {
                     let category = obj.value(forKey: "category") as? String
                 else {return nil}
                 let amount = (obj.value(forKey: "amount") as? Double) ?? 0
-                return ExpenseItem(id: id, date: date, title: title, amount: amount, category: category)
+                return ExpenseItem(
+                    id: id, date: date, title: title, amount: amount, category: category,
+                    recurringID: obj.value(forKey: "recurringID") as? UUID
+                )
                 
             }
         }catch{

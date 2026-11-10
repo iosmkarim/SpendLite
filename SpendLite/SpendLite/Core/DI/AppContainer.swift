@@ -14,12 +14,14 @@ final class AppContainer {
     let coreData: CoreDataStack
     let expenses: ExpenseRepository
     let budget: BudgetRepository
+    let recurring: RecurringExpenseRepository
     /// Where budget and preferences are stored (a throwaway suite when in-memory).
     let defaults: UserDefaults
 
     init(inMemory: Bool = false) {
         self.coreData = CoreDataStack(inMemory: inMemory)
         self.expenses = CoreDataExpenseRepository(stack: coreData)
+        self.recurring = CoreDataRecurringExpenseRepository(stack: coreData)
         // In-memory containers (previews/tests) get a throwaway defaults suite
         // so they never read or overwrite the real budget.
         let defaults = inMemory

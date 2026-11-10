@@ -38,6 +38,13 @@ struct TransactionRowView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+
+                    if item.isRecurring {
+                        // Added automatically by a recurring expense.
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color.brand)
+                    }
                 }
             }
             
@@ -54,7 +61,7 @@ struct TransactionRowView: View {
         // (instead of separate stops and "minus 4 dollars 75").
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "\(item.title), \(category.name), \(ExpenseDate.label(for: item.date)), spent \(item.amount.asCurrency())"
+            "\(item.title), \(category.name), \(ExpenseDate.label(for: item.date)), spent \(item.amount.asCurrency())\(item.isRecurring ? ", recurring" : "")"
         )
     }
 }
