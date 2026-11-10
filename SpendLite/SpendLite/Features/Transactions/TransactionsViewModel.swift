@@ -6,7 +6,7 @@
 import Foundation
 import Combine
 
-/// Drives the Transactions tab: every expense grouped by month (optionally one category),
+/// Drives the Transactions tab: expenses grouped by month, narrowed by search and filters,
 /// plus delete with undo.
 final class TransactionsViewModel: ObservableObject {
 
@@ -14,8 +14,11 @@ final class TransactionsViewModel: ObservableObject {
     /// The expense just deleted, so the screen can offer Undo. Cleared on undo or dismiss.
     @Published private(set) var recentlyDeleted: ExpenseItem?
     @Published var errorMessage: String?
-    /// Show only this category, or everything when nil.
-    @Published var categoryFilter: ExpenseCategory?
+    /// Search text, categories and date range applied to the list.
+    @Published var filter = TransactionFilter()
+    /// Number and total of the expenses currently shown (for "3 results · $45.20").
+    @Published private(set) var resultCount = 0
+    @Published private(set) var resultTotal: Double = 0
 
     /// False until the first list arrives, so the empty state doesn't flash on launch.
     @Published private(set) var hasLoaded = false
@@ -25,21 +28,52 @@ final class TransactionsViewModel: ObservableObject {
     private let expenses: ExpenseRepository
     private var cancellables = Set<AnyCancellable>()
 
-    init(expenses: ExpenseRepository, calendar: Calendar = .current) {
+    init(expenses: ExpenseRepository, now: @escaping () -> Date = { .now }, calendar: Calendar = .current) {
         self.expenses = expenses
 
         expenses.expensesPublisher
-            .combineLatest($categoryFilter)
+            .combineLatest($filter.removeDuplicates())
             .map { items, filter in
-                let shown = filter.map { category in items.filter { $0.categoryKind == category } } ?? items
-                return TransactionSection.byMonth(shown, calendar: calendar)
+                let today = now()
+                let shown = filter.isActive
+                    ? items.filter { filter.matches($0, now: today, calendar: calendar) }
+                    : items
+                return (TransactionSection.byMonth(shown, calendar: calendar), shown)
             }
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] in
-                self?.sections = $0
+            .sink { [weak self] sections, shown in
+                self?.sections = sections
+                self?.resultCount = shown.count
+                self?.resultTotal = shown.reduce(0) { $0 + $1.amount }
                 self?.hasLoaded = true
             }
             .store(in: &cancellables)
+    }
+
+    // MARK: - Filter actions
+
+    func toggle(_ category: ExpenseCategory) {
+        if filter.categories.contains(category) {
+            filter.categories.remove(category)
+        } else {
+            filter.categories.insert(category)
+        }
+    }
+
+    /// Clears categories and date range (keeps the search text).
+    func clearFilters() {
+        filter.categories = []
+        filter.dateRange = .allTime
+    }
+
+    /// Clears everything, including search.
+    func clearAll() {
+        filter = TransactionFilter()
+    }
+
+    /// Insights → tap a category: show only that category, for all time, with no search.
+    func showOnly(_ category: ExpenseCategory) {
+        filter = TransactionFilter(categories: [category])
     }
 
     func delete(_ item: ExpenseItem) {

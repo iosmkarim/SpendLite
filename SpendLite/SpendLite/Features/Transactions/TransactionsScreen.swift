@@ -6,7 +6,7 @@
 import SwiftUI
 
 /// The Transactions tab: every expense grouped by month with a monthly total.
-/// Tap a row to edit it, swipe left to delete (with Undo), + to add.
+/// Search and filter (category, date range); tap a row to edit it, swipe left to delete (with Undo), + to add.
 struct TransactionsScreen: View {
     @StateObject private var viewModel: TransactionsViewModel
     @EnvironmentObject private var nav: NavCoordinator
@@ -37,8 +37,8 @@ struct TransactionsScreen: View {
         // that's why the filter chip is a row inside the list rather than above it.
         Group {
             if viewModel.isEmpty {
-                if let filter = viewModel.categoryFilter {
-                    filteredEmptyState(filter)
+                if viewModel.filter.isActive {
+                    noMatchesState
                 } else {
                     emptyState
                 }
@@ -46,15 +46,22 @@ struct TransactionsScreen: View {
                 list
             }
         }
-        // The filter lives in NavCoordinator so Insights can set it before switching tabs.
-        .onAppear { viewModel.categoryFilter = nav.transactionsFilter }
-        .onChange(of: nav.transactionsFilter) { _, newValue in
-            withAnimation(.snappy) { viewModel.categoryFilter = newValue }
-        }
+        .searchable(
+            text: $viewModel.filter.searchText,
+            placement: .navigationBarDrawer(displayMode: .always),
+            prompt: "Search description, category or amount"
+        )
+        // Insights ("show Food") and Home ("See All") ask for a view via NavCoordinator;
+        // apply the request once, then clear it so the user can change filters freely.
+        .onAppear(perform: applyNavigationRequest)
+        .onChange(of: nav.transactionsRequest) { _, _ in applyNavigationRequest() }
         .background(Color.appBackground.ignoresSafeArea())
         .navigationTitle("Transactions")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                filterMenu
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     activeSheet = .add
@@ -103,15 +110,72 @@ struct TransactionsScreen: View {
         }
     }
 
+    private func applyNavigationRequest() {
+        guard let request = nav.transactionsRequest else { return }
+        withAnimation(.snappy) {
+            switch request {
+            case .showAll: viewModel.clearAll()
+            case .category(let category): viewModel.showOnly(category)
+            }
+        }
+        nav.transactionsRequest = nil
+    }
+
+    // MARK: - Filter menu
+
+    private var filterMenu: some View {
+        Menu {
+            Picker("Date", selection: $viewModel.filter.dateRange) {
+                ForEach(TransactionFilter.DateRange.allCases) { range in
+                    Text(range.title).tag(range)
+                }
+            }
+            .pickerStyle(.inline)
+
+            Section("Categories") {
+                ForEach(ExpenseCategory.allCases) { category in
+                    Toggle(isOn: Binding(
+                        get: { viewModel.filter.categories.contains(category) },
+                        set: { _ in viewModel.toggle(category) }
+                    )) {
+                        Label(category.name, systemImage: category.systemImage)
+                    }
+                }
+            }
+
+            if viewModel.filter.hasFilters {
+                Button("Clear filters", systemImage: "xmark.circle", role: .destructive) {
+                    withAnimation(.snappy) { viewModel.clearFilters() }
+                }
+            }
+        } label: {
+            Label(
+                "Filter",
+                systemImage: viewModel.filter.hasFilters
+                    ? "line.3.horizontal.decrease.circle.fill"
+                    : "line.3.horizontal.decrease.circle"
+            )
+        }
+        .accessibilityIdentifier("transactions.filterMenu")
+        .accessibilityValue(viewModel.filter.hasFilters ? "Filters on" : "No filters")
+    }
+
     // MARK: - List
 
     private var list: some View {
         List {
-            if let filter = viewModel.categoryFilter {
-                FilterBar(category: filter) { nav.transactionsFilter = nil }
-                    .listRowInsets(EdgeInsets())
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
+            if viewModel.filter.isActive {
+                ActiveFiltersBar(
+                    filter: viewModel.filter,
+                    resultCount: viewModel.resultCount,
+                    resultTotal: viewModel.resultTotal,
+                    onRemoveCategory: { category in withAnimation(.snappy) { viewModel.toggle(category) } },
+                    onRemoveDateRange: { withAnimation(.snappy) { viewModel.filter.dateRange = .allTime } },
+                    onClearAll: { withAnimation(.snappy) { viewModel.clearAll() } }
+                )
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
             }
             ForEach(viewModel.sections) { section in
                 Section {
@@ -164,15 +228,25 @@ struct TransactionsScreen: View {
 
     // MARK: - Empty states
 
-    private func filteredEmptyState(_ category: ExpenseCategory) -> some View {
+    private var noMatchesState: some View {
         ContentUnavailableView {
-            Label("No \(category.name) expenses", systemImage: category.systemImage)
+            Label("No matches", systemImage: "magnifyingglass")
         } description: {
-            Text("Nothing in this category yet.")
+            Text(noMatchesDescription)
         } actions: {
-            Button("Show all") { nav.transactionsFilter = nil }
+            Button("Clear search and filters") {
+                withAnimation(.snappy) { viewModel.clearAll() }
+            }
+            .accessibilityIdentifier("transactions.noMatches.clear")
         }
         .frame(maxHeight: .infinity)
+    }
+
+    private var noMatchesDescription: String {
+        let search = viewModel.filter.searchText.trimmingCharacters(in: .whitespaces)
+        return search.isEmpty
+            ? "No expenses match these filters."
+            : "No expenses match \u{201C}\(search)\u{201D}\(viewModel.filter.hasFilters ? " with these filters" : "")."
     }
 
     private var emptyState: some View {
@@ -189,36 +263,81 @@ struct TransactionsScreen: View {
 
 // MARK: - Pieces
 
-/// "Showing: 🍴 Food ✕" above the list when a category filter is on.
-private struct FilterBar: View {
-    let category: ExpenseCategory
-    let onClear: () -> Void
+/// Active filters as removable chips, plus "3 results · $45.20".
+private struct ActiveFiltersBar: View {
+    let filter: TransactionFilter
+    let resultCount: Int
+    let resultTotal: Double
+    let onRemoveCategory: (ExpenseCategory) -> Void
+    let onRemoveDateRange: () -> Void
+    let onClearAll: () -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
-            Text("Showing")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            Button(action: onClear) {
-                HStack(spacing: 6) {
-                    Image(systemName: category.systemImage)
-                    Text(category.name)
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(category.color.opacity(0.6))
+        VStack(alignment: .leading, spacing: 8) {
+            if filter.hasFilters {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        if filter.dateRange != .allTime {
+                            Chip(title: filter.dateRange.title, systemImage: "calendar", color: .brand,
+                                 action: onRemoveDateRange)
+                                .accessibilityIdentifier("transactions.filter.dateRange")
+                        }
+                        ForEach(ExpenseCategory.allCases.filter(filter.categories.contains)) { category in
+                            Chip(title: category.name, systemImage: category.systemImage, color: category.color) {
+                                onRemoveCategory(category)
+                            }
+                            .accessibilityIdentifier("transactions.filter.category.\(category.rawValue)")
+                        }
+                    }
+                    .padding(.horizontal, 20)
                 }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(category.color)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(category.color.opacity(0.12), in: Capsule())
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Filtered to \(category.name). Clear filter")
-            .accessibilityIdentifier("transactions.filter.clear")
-            Spacer()
+
+            HStack {
+                Text(summary)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("transactions.resultSummary")
+                Spacer()
+                Button("Clear all", action: onClearAll)
+                    .font(.subheadline.weight(.semibold))
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Color.brand)
+                    .accessibilityIdentifier("transactions.filter.clear")
+            }
+            .padding(.horizontal, 20)
         }
-        .padding(.horizontal, 20)
         .padding(.vertical, 8)
+    }
+
+    private var summary: String {
+        "\(resultCount) \(resultCount == 1 ? "result" : "results") · \(resultTotal.asCurrency())"
+    }
+}
+
+/// A removable filter chip: "🍴 Food ✕".
+private struct Chip: View {
+    let title: String
+    let systemImage: String
+    let color: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: systemImage)
+                Text(title)
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(color.opacity(0.6))
+            }
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(color)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(color.opacity(0.12), in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(title) filter. Remove")
     }
 }
 

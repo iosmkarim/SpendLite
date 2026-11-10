@@ -187,11 +187,11 @@ struct InsightsTests {
         let vm = TransactionsViewModel(expenses: repo, calendar: calendar)
         await waitUntil { vm.sections.flatMap(\.items).count == 3 }
 
-        vm.categoryFilter = .food
+        vm.showOnly(.food)
         await waitUntil { vm.sections.flatMap(\.items).count == 2 }
         #expect(vm.sections.flatMap(\.items).allSatisfy { $0.categoryKind == .food })
 
-        vm.categoryFilter = nil
+        vm.clearAll()
         await waitUntil { vm.sections.flatMap(\.items).count == 3 }
     }
 
@@ -199,10 +199,10 @@ struct InsightsTests {
         let nav = NavCoordinator()
         nav.goToTransactions(category: .food)
         #expect(nav.selectedTab == .transactions)
-        #expect(nav.transactionsFilter == .food)
+        #expect(nav.transactionsRequest == .category(.food))
 
         nav.goToTransactions() // "See All" from Home shows everything
-        #expect(nav.transactionsFilter == nil)
+        #expect(nav.transactionsRequest == .showAll)
     }
 
     // MARK: - Helpers
