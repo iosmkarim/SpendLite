@@ -14,6 +14,8 @@ final class AppContainer {
     let coreData: CoreDataStack
     let expenses: ExpenseRepository
     let budget: BudgetRepository
+    /// Where budget and preferences are stored (a throwaway suite when in-memory).
+    let defaults: UserDefaults
 
     init(inMemory: Bool = false) {
         self.coreData = CoreDataStack(inMemory: inMemory)
@@ -23,6 +25,7 @@ final class AppContainer {
         let defaults = inMemory
             ? UserDefaults(suiteName: "SpendLite.inMemory.\(UUID().uuidString)") ?? .standard
             : .standard
+        self.defaults = defaults
         self.budget = UserDefaultsBudgetRepository(defaults: defaults)
         // Later: feature flags, etc.
     }
