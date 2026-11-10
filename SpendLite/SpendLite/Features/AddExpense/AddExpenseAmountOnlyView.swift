@@ -79,7 +79,7 @@ struct AddExpenseAmountOnlyView: View {
             Form {
                 Section("Amount") {
                     HStack {
-                        Text(Locale.current.currencySymbol ?? "$")
+                        Text(Currency.symbol)
                             .foregroundStyle(.secondary)
                         TextField("Enter amount", text: $amountText)
                             .keyboardType(.numbersAndPunctuation)

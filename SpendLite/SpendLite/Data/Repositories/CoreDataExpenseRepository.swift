@@ -89,6 +89,17 @@ final class CoreDataExpenseRepository: ExpenseRepository {
         }
     }
 
+    func deleteAllExpenses() -> AnyPublisher<Void, Error> {
+        performChange { context in
+            // Fetch-and-delete (not a batch delete) so the view context stays in sync.
+            let request = NSFetchRequest<NSManagedObject>(entityName: "Expense")
+            request.includesPropertyValues = false
+            for object in try context.fetch(request) {
+                context.delete(object)
+            }
+        }
+    }
+
     // MARK: - Helpers
 
     enum RepositoryError: LocalizedError {

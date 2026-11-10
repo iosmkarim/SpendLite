@@ -12,6 +12,9 @@ import SwiftUI
 struct TabShellView: View {
     @StateObject private var nav = NavCoordinator()
     @Environment(\.container) private var container
+    /// Amounts are formatted with `Currency.code`; rebuilding the tabs when it changes
+    /// updates every amount on screen. The selected tab lives in `nav`, so it's kept.
+    @AppStorage(AppSettings.Key.currencyCode) private var currencyCode: String = ""
 
     var body: some View {
         TabView(selection: $nav.selectedTab) {
@@ -32,10 +35,10 @@ struct TabShellView: View {
 
             // Settings
             makeTab(.settings, title: "Settings", systemImage: "gearshape.fill", navTitle: "Settings") {
-                Text("Settings")
-                    .font(.title)
+                SettingsScreen(expenses: container.expenses, budget: container.budget)
             }
         }
+        .id(currencyCode)
         .environmentObject(nav)
     }
 

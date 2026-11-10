@@ -22,6 +22,9 @@ protocol ExpenseRepository {
     /// Deletes the expense with this id (no-op if it's already gone), then re-emits the list.
     func deleteExpense(id: UUID) -> AnyPublisher<Void, Error>
 
+    /// Deletes every expense (Settings → Delete All Expenses), then re-emits the empty list.
+    func deleteAllExpenses() -> AnyPublisher<Void, Error>
+
     /// Inserts a small sample expense for development/testing.
     func addSampleExpense() -> AnyPublisher<Void, Error>
 }
