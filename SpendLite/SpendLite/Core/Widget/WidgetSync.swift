@@ -48,6 +48,13 @@ final class WidgetSync {
         write()
     }
 
+    /// Writes straight away with these values (Siri actions can't wait for the debounce:
+    /// the system may suspend the app as soon as the action finishes).
+    func writeNow(expenses: [ExpenseItem], budget: Double) {
+        latest = (expenses, budget)
+        write()
+    }
+
     private func write() {
         guard let latest else { return }
         let snapshot = Self.makeSnapshot(

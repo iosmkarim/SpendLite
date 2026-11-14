@@ -11,6 +11,10 @@ import Foundation
 import Combine
 
 final class AppContainer {
+    /// The real app's container. Siri / Shortcuts actions can run without the app's UI,
+    /// so they use this same instance rather than opening a second copy of the database.
+    static let live = AppContainer()
+
     let coreData: CoreDataStack
     let expenses: ExpenseRepository
     let budget: BudgetRepository

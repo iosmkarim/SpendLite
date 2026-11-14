@@ -7,7 +7,8 @@ import Foundation
 
 /// The fixed set of spending categories. The raw value is what's stored in Core Data
 /// (`ExpenseItem.category`) and shown to the user.
-enum ExpenseCategory: String, CaseIterable, Identifiable, Hashable {
+/// Plain data with no shared state, so it's usable from any thread (Siri runs off the main actor).
+nonisolated enum ExpenseCategory: String, CaseIterable, Identifiable, Hashable, Sendable {
     case food = "Food"
     case transport = "Transport"
     case fun = "Fun"
