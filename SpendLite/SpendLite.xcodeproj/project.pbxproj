@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		DDA7521B2EBACCD0001B6C25 /* SpendLiteWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = DDA752102EBACCD0001B6C25 /* SpendLiteWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		DDA751C12EBACCCA001B6C25 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,17 +25,59 @@
 			remoteGlobalIDString = DDA751AD2EBACCC8001B6C25;
 			remoteInfo = SpendLite;
 		};
+		DDA7521D2EBACCD0001B6C25 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DDA751A62EBACCC8001B6C25 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DDA752172EBACCD0001B6C25;
+			remoteInfo = SpendLiteWidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DDA7521C2EBACCD0001B6C25 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				DDA7521B2EBACCD0001B6C25 /* SpendLiteWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		DDA751AE2EBACCC8001B6C25 /* SpendLite.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpendLite.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DDA751C02EBACCCA001B6C25 /* SpendLiteTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpendLiteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DDA751CA2EBACCCA001B6C25 /* SpendLiteUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpendLiteUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DDA752102EBACCD0001B6C25 /* SpendLiteWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SpendLiteWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		DDA752132EBACCD0001B6C25 /* Exceptions for "SpendLiteWidget" folder in "SpendLiteWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = DDA752172EBACCD0001B6C25 /* SpendLiteWidgetExtension */;
+		};
+		DDA7521F2EBACCD0001B6C25 /* Exceptions for "SpendLite" folder in "SpendLite" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = DDA751AD2EBACCC8001B6C25 /* SpendLite */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		DDA751B02EBACCC8001B6C25 /* SpendLite */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				DDA7521F2EBACCD0001B6C25 /* Exceptions for "SpendLite" folder in "SpendLite" target */,
+			);
 			path = SpendLite;
 			sourceTree = "<group>";
 		};
@@ -43,6 +89,19 @@
 		DDA751CD2EBACCCA001B6C25 /* SpendLiteUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = SpendLiteUITests;
+			sourceTree = "<group>";
+		};
+		DDA752112EBACCD0001B6C25 /* SpendLiteWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				DDA752132EBACCD0001B6C25 /* Exceptions for "SpendLiteWidget" folder in "SpendLiteWidgetExtension" target */,
+			);
+			path = SpendLiteWidget;
+			sourceTree = "<group>";
+		};
+		DDA752122EBACCD0001B6C25 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -69,6 +128,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DDA752152EBACCD0001B6C25 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -78,6 +144,8 @@
 				DDA751B02EBACCC8001B6C25 /* SpendLite */,
 				DDA751C32EBACCCA001B6C25 /* SpendLiteTests */,
 				DDA751CD2EBACCCA001B6C25 /* SpendLiteUITests */,
+				DDA752122EBACCD0001B6C25 /* Shared */,
+				DDA752112EBACCD0001B6C25 /* SpendLiteWidget */,
 				DDA751AF2EBACCC8001B6C25 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,6 +156,7 @@
 				DDA751AE2EBACCC8001B6C25 /* SpendLite.app */,
 				DDA751C02EBACCCA001B6C25 /* SpendLiteTests.xctest */,
 				DDA751CA2EBACCCA001B6C25 /* SpendLiteUITests.xctest */,
+				DDA752102EBACCD0001B6C25 /* SpendLiteWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -102,13 +171,16 @@
 				DDA751AA2EBACCC8001B6C25 /* Sources */,
 				DDA751AB2EBACCC8001B6C25 /* Frameworks */,
 				DDA751AC2EBACCC8001B6C25 /* Resources */,
+				DDA7521C2EBACCD0001B6C25 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				DDA7521E2EBACCD0001B6C25 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				DDA751B02EBACCC8001B6C25 /* SpendLite */,
+				DDA752122EBACCD0001B6C25 /* Shared */,
 			);
 			name = SpendLite;
 			packageProductDependencies = (
@@ -163,6 +235,29 @@
 			productReference = DDA751CA2EBACCCA001B6C25 /* SpendLiteUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		DDA752172EBACCD0001B6C25 /* SpendLiteWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DDA752182EBACCD0001B6C25 /* Build configuration list for PBXNativeTarget "SpendLiteWidgetExtension" */;
+			buildPhases = (
+				DDA752142EBACCD0001B6C25 /* Sources */,
+				DDA752152EBACCD0001B6C25 /* Frameworks */,
+				DDA752162EBACCD0001B6C25 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				DDA752112EBACCD0001B6C25 /* SpendLiteWidget */,
+				DDA752122EBACCD0001B6C25 /* Shared */,
+			);
+			name = SpendLiteWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = SpendLiteWidgetExtension;
+			productReference = DDA752102EBACCD0001B6C25 /* SpendLiteWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -184,6 +279,9 @@
 						CreatedOnToolsVersion = 26.0.1;
 						TestTargetID = DDA751AD2EBACCC8001B6C25;
 					};
+					DDA752172EBACCD0001B6C25 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
 				};
 			};
 			buildConfigurationList = DDA751A92EBACCC8001B6C25 /* Build configuration list for PBXProject "SpendLite" */;
@@ -203,6 +301,7 @@
 				DDA751AD2EBACCC8001B6C25 /* SpendLite */,
 				DDA751BF2EBACCCA001B6C25 /* SpendLiteTests */,
 				DDA751C92EBACCCA001B6C25 /* SpendLiteUITests */,
+				DDA752172EBACCD0001B6C25 /* SpendLiteWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -223,6 +322,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		DDA751C82EBACCCA001B6C25 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DDA752162EBACCD0001B6C25 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -253,6 +359,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DDA752142EBACCD0001B6C25 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -265,6 +378,11 @@
 			isa = PBXTargetDependency;
 			target = DDA751AD2EBACCC8001B6C25 /* SpendLite */;
 			targetProxy = DDA751CB2EBACCCA001B6C25 /* PBXContainerItemProxy */;
+		};
+		DDA7521E2EBACCD0001B6C25 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DDA752172EBACCD0001B6C25 /* SpendLiteWidgetExtension */;
+			targetProxy = DDA7521D2EBACCD0001B6C25 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -395,11 +513,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = SpendLite.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = U45GWAP5U5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SpendLite/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -429,11 +549,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = SpendLite.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = U45GWAP5U5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SpendLite/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -542,6 +664,66 @@
 			};
 			name = Release;
 		};
+		DDA752192EBACCD0001B6C25 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = SpendLiteWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = U45GWAP5U5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SpendLiteWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SpendLite;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iosmkarim.SpendLite.Widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DDA7521A2EBACCD0001B6C25 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = SpendLiteWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = U45GWAP5U5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SpendLiteWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SpendLite;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iosmkarim.SpendLite.Widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -577,6 +759,15 @@
 			buildConfigurations = (
 				DDA751DB2EBACCCB001B6C25 /* Debug */,
 				DDA751DC2EBACCCB001B6C25 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DDA752182EBACCD0001B6C25 /* Build configuration list for PBXNativeTarget "SpendLiteWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DDA752192EBACCD0001B6C25 /* Debug */,
+				DDA7521A2EBACCD0001B6C25 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -15,6 +15,9 @@ final class AppContainer {
     let expenses: ExpenseRepository
     let budget: BudgetRepository
     let recurring: RecurringExpenseRepository
+    /// Keeps the Home Screen widget in sync. Nil for in-memory containers (tests, previews)
+    /// so they never overwrite what the real widget shows.
+    let widgetSync: WidgetSync?
     /// Where budget and preferences are stored (a throwaway suite when in-memory).
     let defaults: UserDefaults
 
@@ -29,6 +32,7 @@ final class AppContainer {
             : .standard
         self.defaults = defaults
         self.budget = UserDefaultsBudgetRepository(defaults: defaults)
+        self.widgetSync = inMemory ? nil : WidgetSync(expenses: expenses, budget: budget)
         // Later: feature flags, etc.
     }
 }
