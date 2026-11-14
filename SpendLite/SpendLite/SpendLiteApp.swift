@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AppIntents
 
 @main
 struct SpendLiteApp: App {
@@ -32,7 +33,9 @@ struct SpendLiteApp: App {
             }
             container = AppContainer(inMemory: true, authenticator: fake, defaults: defaults)
         } else {
-            container = AppContainer()
+            container = .live
+            // Lets Siri learn phrases with a category in them ("Add a Food expense in SpendLite").
+            SpendLiteShortcuts.updateAppShortcutParameters()
         }
         // Preferences (currency, appearance) come from the container's store,
         // so UI tests never change the real settings.
