@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 struct AddExpenseAmountOnlyView: View {
     @StateObject private var viewModel: AddExpenseViewModel
@@ -11,6 +12,13 @@ struct AddExpenseAmountOnlyView: View {
     @State private var showDatePicker: Bool = false
     /// nil = doesn't repeat.
     @State private var repeatFrequency: RecurringExpense.Frequency?
+
+    // Receipt scanning
+    @State private var showingScanner = false
+    @State private var showingPhotoPicker = false
+    @State private var photoItem: PhotosPickerItem?
+    @State private var isReadingReceipt = false
+    @State private var receiptMessage: String?
 
     /// True when shown in a sheet: adds a Cancel button and closes itself after saving.
     private let isPresentedAsSheet: Bool
@@ -65,6 +73,81 @@ struct AddExpenseAmountOnlyView: View {
         repeatFrequency = nil
     }
     
+    // MARK: - Receipt scanning
+
+    /// UI tests get a "Use Sample Receipt" option (the simulator has no camera).
+    private var isUITesting: Bool {
+        ProcessInfo.processInfo.arguments.contains(SpendLiteApp.uiTestingArgument)
+    }
+
+    private func readReceipt(_ image: UIImage) {
+        isReadingReceipt = true
+        receiptMessage = nil
+        Task {
+            defer { isReadingReceipt = false }
+            do {
+                let lines = try await ReceiptTextRecognizer.lines(in: image)
+                apply(ReceiptParser.parse(lines: lines))
+            } catch {
+                receiptMessage = "Couldn't read this receipt. Try a clearer photo, or fill it in by hand."
+            }
+        }
+    }
+
+    /// Fills in what was found; anything not found keeps what the user already entered.
+    private func apply(_ draft: ReceiptDraft) {
+        withAnimation(.snappy) {
+            if let amount = draft.amount {
+                amountText = AddExpenseViewModel.amountText(for: NSDecimalNumber(decimal: amount).doubleValue)
+            }
+            if let merchant = draft.merchant { descriptionText = merchant }
+            if let date = draft.date { selectedDate = date }
+            if let category = draft.category, selectedCategory == nil { selectedCategory = category }
+        }
+        if draft.isEmpty {
+            receiptMessage = "Couldn't read this receipt. Try a clearer photo, or fill it in by hand."
+        } else if draft.amount == nil {
+            receiptMessage = "Couldn't find the total. Please enter the amount."
+        } else {
+            receiptMessage = "Filled in from your receipt. Check the amount before saving."
+        }
+    }
+
+    private var scanSection: some View {
+        Section {
+            Menu {
+                if DocumentScannerView.isSupported {
+                    Button("Take Photo", systemImage: "camera") { showingScanner = true }
+                }
+                Button("Choose from Photos", systemImage: "photo.on.rectangle") { showingPhotoPicker = true }
+                if isUITesting {
+                    Button("Use Sample Receipt", systemImage: "doc.text") { readReceipt(SampleReceipt.image()) }
+                }
+            } label: {
+                HStack {
+                    Label("Scan a receipt", systemImage: "doc.text.viewfinder")
+                    Spacer()
+                    if isReadingReceipt {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "chevron.down")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                .contentShape(Rectangle())
+            }
+            .disabled(isReadingReceipt)
+            .accessibilityIdentifier("addExpense.scanReceipt")
+        } footer: {
+            if let receiptMessage {
+                Text(receiptMessage)
+                    .accessibilityIdentifier("addExpense.receiptMessage")
+            }
+        }
+        .listRowBackground(Color.formRowBackground)
+    }
+
     /// Shared with Home/Transactions so icons and colours match everywhere.
     private var categories: [ExpenseCategory] { ExpenseCategory.allCases }
 
@@ -84,6 +167,9 @@ struct AddExpenseAmountOnlyView: View {
     var body: some View {
         ScrollViewReader { proxy in
             Form {
+                if !viewModel.isEditing {
+                    scanSection
+                }
                 Section("Amount") {
                     HStack {
                         Text(Currency.symbol)
@@ -259,6 +345,27 @@ struct AddExpenseAmountOnlyView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(viewModel.errorMessage ?? "")
+        }
+        .photosPicker(isPresented: $showingPhotoPicker, selection: $photoItem, matching: .images)
+        .onChange(of: photoItem) { _, item in
+            guard let item else { return }
+            photoItem = nil
+            Task {
+                if let data = try? await item.loadTransferable(type: Data.self), let image = UIImage(data: data) {
+                    readReceipt(image)
+                } else {
+                    receiptMessage = "Couldn't open that photo."
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showingScanner) {
+            DocumentScannerView { image in
+                showingScanner = false
+                readReceipt(image)
+            } onCancel: {
+                showingScanner = false
+            }
+            .ignoresSafeArea()
         }
         .toolbarBackground(.bar, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)

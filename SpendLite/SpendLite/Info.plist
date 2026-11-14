@@ -13,6 +13,8 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>SpendLite uses the camera to scan receipts and fill in the amount for you.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>SpendLite uses Face ID to keep your spending private.</string>
 </dict>
