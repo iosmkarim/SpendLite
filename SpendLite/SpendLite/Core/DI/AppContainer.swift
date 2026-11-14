@@ -18,21 +18,24 @@ final class AppContainer {
     /// Keeps the Home Screen widget in sync. Nil for in-memory containers (tests, previews)
     /// so they never overwrite what the real widget shows.
     let widgetSync: WidgetSync?
+    /// Face ID / passcode lock (Settings → Privacy).
+    let appLock: AppLock
     /// Where budget and preferences are stored (a throwaway suite when in-memory).
     let defaults: UserDefaults
 
-    init(inMemory: Bool = false) {
+    init(inMemory: Bool = false, authenticator: Authenticator = DeviceAuthenticator(), defaults existingDefaults: UserDefaults? = nil) {
         self.coreData = CoreDataStack(inMemory: inMemory)
         self.expenses = CoreDataExpenseRepository(stack: coreData)
         self.recurring = CoreDataRecurringExpenseRepository(stack: coreData)
         // In-memory containers (previews/tests) get a throwaway defaults suite
         // so they never read or overwrite the real budget.
-        let defaults = inMemory
+        let defaults = existingDefaults ?? (inMemory
             ? UserDefaults(suiteName: "SpendLite.inMemory.\(UUID().uuidString)") ?? .standard
-            : .standard
+            : .standard)
         self.defaults = defaults
         self.budget = UserDefaultsBudgetRepository(defaults: defaults)
         self.widgetSync = inMemory ? nil : WidgetSync(expenses: expenses, budget: budget)
+        self.appLock = AppLock(store: defaults, authenticator: authenticator)
         // Later: feature flags, etc.
     }
 }

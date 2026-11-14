@@ -13,5 +13,7 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>SpendLite uses Face ID to keep your spending private.</string>
 </dict>
 </plist>

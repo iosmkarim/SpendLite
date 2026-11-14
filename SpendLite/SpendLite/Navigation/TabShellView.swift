@@ -43,11 +43,18 @@ struct TabShellView: View {
         }
         .id(currencyCode)
         .environmentObject(nav)
+        .environmentObject(container.appLock)
+        // Lock screen on top of everything while locked; a plain cover in the app switcher.
+        .overlay { AppLockGate(appLock: container.appLock, scenePhase: scenePhase) }
         .onOpenURL { nav.handle($0) }
         .onChange(of: currencyCode) { _, _ in container.widgetSync?.refresh() }
         // Add any recurring expenses that came due while the app was closed or in the background.
         .onChange(of: scenePhase, initial: true) { _, phase in
+            // Lock when leaving for the background (not on .inactive, which is also what the
+            // Face ID prompt itself causes). Ask again when coming back.
+            if phase == .background { container.appLock.lock() }
             guard phase == .active else { return }
+            if container.appLock.isLocked { Task { await container.appLock.unlock() } }
             generation = container.recurring.generateDueExpenses(now: .now)
                 .sink(receiveCompletion: { _ in }, receiveValue: { _ in })
         }
