@@ -8,6 +8,8 @@ import SwiftUI
 /// The Settings tab: budget, currency, appearance, export / delete data, about.
 struct SettingsScreen: View {
     @StateObject private var viewModel: SettingsViewModel
+    @EnvironmentObject private var appLock: AppLock
+    @State private var lockErrorMessage: String?
 
     /// "" means Automatic (follow the device region).
     @AppStorage(AppSettings.Key.currencyCode) private var currencyCode: String = ""
@@ -30,6 +32,7 @@ struct SettingsScreen: View {
         Form {
             budgetSection
             preferencesSection
+            privacySection
             dataSection
             aboutSection
         }
@@ -136,6 +139,41 @@ struct SettingsScreen: View {
         .listRowBackground(Color.formRowBackground)
     }
 
+    private var privacySection: some View {
+        Section {
+            Toggle(isOn: Binding(
+                get: { appLock.isEnabled },
+                set: { newValue in
+                    Task {
+                        let changed = await appLock.setEnabled(newValue)
+                        if !changed && !appLock.authenticator.isAvailable {
+                            lockErrorMessage = "Set a passcode in the iOS Settings app to use the lock."
+                        }
+                    }
+                }
+            )) {
+                SettingsRow(icon: appLock.authenticator.systemImage, color: .green, title: "Lock with \(appLock.methodName)") {
+                    EmptyView()
+                }
+            }
+            .disabled(appLock.isAuthenticating)
+            .accessibilityIdentifier("settings.appLock")
+        } header: {
+            Text("Privacy")
+        } footer: {
+            Text("SpendLite asks for \(appLock.methodName) (or your passcode) each time you open it, and hides your amounts in the app switcher.")
+        }
+        .listRowBackground(Color.formRowBackground)
+        .alert("Can't turn on the lock", isPresented: Binding(
+            get: { lockErrorMessage != nil },
+            set: { if !$0 { lockErrorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(lockErrorMessage ?? "")
+        }
+    }
+
     private var dataSection: some View {
         Section {
             let csv = viewModel.makeCSV()
@@ -232,4 +270,5 @@ private struct SettingsRow<Trailing: View>: View {
     NavigationStack {
         SettingsScreen(expenses: AppContainer.preview().expenses, budget: AppContainer.preview().budget)
     }
+    .environmentObject(AppLock(store: UserDefaults(suiteName: "preview")!, authenticator: FakeAuthenticator(succeeds: true)))
 }
