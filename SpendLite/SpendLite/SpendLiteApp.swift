@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AppIntents
+import UserNotifications
 
 @main
 struct SpendLiteApp: App {
@@ -18,6 +19,8 @@ struct SpendLiteApp: App {
     static let authFailsArgument = "-ui-testing-auth-fails"
     /// UI tests skip the welcome screens unless they pass this.
     static let onboardingArgument = "-ui-testing-onboarding"
+    /// UI tests only: pretend notification permission was denied.
+    static let notificationsDeniedArgument = "-ui-testing-notifications-denied"
 
     private let container: AppContainer
 
@@ -36,9 +39,11 @@ struct SpendLiteApp: App {
             if !arguments.contains(SpendLiteApp.onboardingArgument) {
                 defaults.set(true, forKey: AppSettings.Key.hasCompletedOnboarding)
             }
-            container = AppContainer(inMemory: true, authenticator: fake, defaults: defaults)
+            let notifications = FakeNotificationScheduler(grantsPermission: !arguments.contains(SpendLiteApp.notificationsDeniedArgument))
+            container = AppContainer(inMemory: true, authenticator: fake, defaults: defaults, notificationScheduler: notifications)
         } else {
             container = .live
+            UNUserNotificationCenter.current().delegate = NotificationPresenter.shared
             // Lets Siri learn phrases with a category in them ("Add a Food expense in SpendLite").
             SpendLiteShortcuts.updateAppShortcutParameters()
         }

@@ -22,6 +22,13 @@ final class SettingsUITests: XCTestCase {
         app.tabBars.buttons["Settings"].tap()
     }
 
+    /// Scrolls down until a row further down Settings has been created (lists only build visible rows).
+    @discardableResult
+    private func scrollTo(_ element: XCUIElement) -> XCUIElement {
+        for _ in 0..<5 where !(element.exists && element.isHittable) { app.swipeUp() }
+        return element
+    }
+
     /// Waits for an asynchronous update (saves and deletes land a moment after the tap).
     private func wait(for element: XCUIElement, _ predicate: String, timeout: TimeInterval = 3) -> Bool {
         let expectation = XCTNSPredicateExpectation(predicate: NSPredicate(format: predicate), object: element)
@@ -58,7 +65,7 @@ final class SettingsUITests: XCTestCase {
 
     @MainActor
     func testDeleteAllAsksFirstThenEmptiesTheApp() {
-        app.buttons["settings.deleteAll"].tap()
+        scrollTo(app.buttons["settings.deleteAll"]).tap()
         let confirm = app.buttons["Delete All Expenses"]
         XCTAssertTrue(confirm.waitForExistence(timeout: 3), "Must ask before deleting")
         confirm.tap()
@@ -71,6 +78,6 @@ final class SettingsUITests: XCTestCase {
 
     @MainActor
     func testExportIsAvailableWhenThereAreExpenses() {
-        XCTAssertTrue(app.buttons["settings.export"].isEnabled)
+        XCTAssertTrue(scrollTo(app.buttons["settings.export"]).isEnabled)
     }
 }

@@ -25,10 +25,15 @@ final class AppContainer {
     let widgetSync: WidgetSync?
     /// Face ID / passcode lock (Settings → Privacy).
     let appLock: AppLock
+    /// Budget alerts and the daily reminder (Settings → Notifications).
+    let notifications: NotificationManager
     /// Where budget and preferences are stored (a throwaway suite when in-memory).
     let defaults: UserDefaults
 
-    init(inMemory: Bool = false, authenticator: Authenticator = DeviceAuthenticator(), defaults existingDefaults: UserDefaults? = nil) {
+    /// `notificationScheduler`: nil means the real one for the app, a fake for in-memory containers
+    /// (tests and previews never post real notifications).
+    init(inMemory: Bool = false, authenticator: Authenticator = DeviceAuthenticator(), defaults existingDefaults: UserDefaults? = nil,
+         notificationScheduler: NotificationScheduler? = nil) {
         self.coreData = CoreDataStack(inMemory: inMemory)
         self.expenses = CoreDataExpenseRepository(stack: coreData)
         self.recurring = CoreDataRecurringExpenseRepository(stack: coreData)
@@ -41,6 +46,10 @@ final class AppContainer {
         self.budget = UserDefaultsBudgetRepository(defaults: defaults)
         self.widgetSync = inMemory ? nil : WidgetSync(expenses: expenses, budget: budget)
         self.appLock = AppLock(store: defaults, authenticator: authenticator)
+        self.notifications = NotificationManager(
+            expenses: expenses, budget: budget, defaults: defaults,
+            scheduler: notificationScheduler ?? (inMemory ? FakeNotificationScheduler() : SystemNotificationScheduler())
+        )
         // People who used SpendLite before onboarding existed shouldn't see the welcome screens.
         let expenseCount = (try? coreData.viewContext.count(for: NSFetchRequest<NSFetchRequestResult>(entityName: "Expense"))) ?? 0
         Onboarding.skipForExistingUsers(defaults: defaults, hasExpenses: expenseCount > 0)

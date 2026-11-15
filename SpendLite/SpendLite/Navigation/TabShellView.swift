@@ -45,6 +45,7 @@ struct TabShellView: View {
         .id(currencyCode)
         .environmentObject(nav)
         .environmentObject(container.appLock)
+        .environmentObject(container.notifications)
         // Lock screen on top of everything while locked; a plain cover in the app switcher.
         .overlay { AppLockGate(appLock: container.appLock, scenePhase: scenePhase) }
         // First launch: welcome → budget → start. Finishing sets the flag, which closes this.
@@ -62,6 +63,8 @@ struct TabShellView: View {
             // Face ID prompt itself causes). Ask again when coming back.
             if phase == .background { container.appLock.lock() }
             guard phase == .active else { return }
+            // Keep reminders current (e.g. skip tonight's if something was logged by Siri).
+            Task { await container.notifications.update() }
             if container.appLock.isLocked { Task { await container.appLock.unlock() } }
             generation = container.recurring.generateDueExpenses(now: .now)
                 .sink(receiveCompletion: { _ in }, receiveValue: { _ in })
