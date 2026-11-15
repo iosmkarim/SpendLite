@@ -9,6 +9,7 @@
 /// App-wide dependency container. We'll add services/repos here as we build them.
 import Foundation
 import Combine
+import CoreData
 
 final class AppContainer {
     /// The real app's container. Siri / Shortcuts actions can run without the app's UI,
@@ -40,6 +41,9 @@ final class AppContainer {
         self.budget = UserDefaultsBudgetRepository(defaults: defaults)
         self.widgetSync = inMemory ? nil : WidgetSync(expenses: expenses, budget: budget)
         self.appLock = AppLock(store: defaults, authenticator: authenticator)
+        // People who used SpendLite before onboarding existed shouldn't see the welcome screens.
+        let expenseCount = (try? coreData.viewContext.count(for: NSFetchRequest<NSFetchRequestResult>(entityName: "Expense"))) ?? 0
+        Onboarding.skipForExistingUsers(defaults: defaults, hasExpenses: expenseCount > 0)
         // Later: feature flags, etc.
     }
 }
@@ -51,23 +55,7 @@ extension AppContainer {
     /// Categories match the Add Expense form; amounts are positive (spending).
     static func preview() -> AppContainer {
         let container = AppContainer(inMemory: true)
-        let now = Date()
-        let hour: TimeInterval = 3600
-        let samples: [(String, Double, String, TimeInterval)] = [
-            ("Morning coffee", 4.75, "Food", -2 * hour),
-            ("Uber to work", 18.40, "Transport", -26 * hour),
-            ("Groceries", 62.15, "Food", -50 * hour),
-            ("Movie night", 24.00, "Fun", -74 * hour),
-            ("Running shoes", 119.99, "Shopping", -98 * hour),
-        ]
-        for (title, amount, category, offset) in samples {
-            let item = ExpenseItem(
-                id: UUID(),
-                date: now.addingTimeInterval(offset),
-                title: title,
-                amount: amount,
-                category: category
-            )
+        for item in SampleExpenses.make() {
             // Fire-and-forget: the repository re-publishes the list after each save.
             _ = container.expenses.addExpense(item).sink(receiveCompletion: { _ in }, receiveValue: { _ in })
         }

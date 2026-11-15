@@ -25,7 +25,7 @@ nonisolated extension ExpenseCategory: AppEnum {
 // MARK: - Add expense
 
 /// "Hey Siri, add an expense in SpendLite" → asks for the amount, saves it, says what's left.
-nonisolated struct AddExpenseIntent: AppIntent {
+struct AddExpenseIntent: AppIntent {
     static let title: LocalizedStringResource = "Add Expense"
     static let description = IntentDescription("Log a new expense in SpendLite.")
 
@@ -68,7 +68,7 @@ nonisolated struct AddExpenseIntent: AppIntent {
 // MARK: - Budget left
 
 /// "Hey Siri, how much is left in SpendLite" → "You have $1,257 left of your $2,000 November budget."
-nonisolated struct BudgetStatusIntent: AppIntent {
+struct BudgetStatusIntent: AppIntent {
     static let title: LocalizedStringResource = "Check Budget"
     static let description = IntentDescription("Hear how much of this month's budget is left.")
 
