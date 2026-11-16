@@ -329,15 +329,6 @@ struct SettingsScreen: View {
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("settings.showOnboarding")
-
-            Link(destination: URL(string: "https://github.com/iosmkarim/SpendLite")!) {
-                SettingsRow(icon: "chevron.left.forwardslash.chevron.right", color: .black, title: "Source code") {
-                    Image(systemName: "arrow.up.right")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            .buttonStyle(.plain)
         }
         .listRowBackground(Color.formRowBackground)
     }
