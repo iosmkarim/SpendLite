@@ -66,9 +66,10 @@ final class SettingsUITests: XCTestCase {
     @MainActor
     func testDeleteAllAsksFirstThenEmptiesTheApp() {
         scrollTo(app.buttons["settings.deleteAll"]).tap()
-        let confirm = app.buttons["Delete All Expenses"]
-        XCTAssertTrue(confirm.waitForExistence(timeout: 3), "Must ask before deleting")
-        confirm.tap()
+        let alert = app.alerts.firstMatch
+        XCTAssertTrue(alert.waitForExistence(timeout: 3), "Must ask before deleting, in a centered alert")
+        XCTAssertTrue(alert.buttons["Cancel"].exists)
+        alert.buttons["Delete All Expenses"].tap()
 
         XCTAssertTrue(wait(for: app.buttons["settings.deleteAll"], "isEnabled == false"))
         XCTAssertTrue(wait(for: app.buttons["settings.export"], "isEnabled == false"))
