@@ -29,28 +29,12 @@ struct SpendLiteApp: App {
     @AppStorage(AppSettings.Key.appearance) private var appearance: Appearance = .system
 
     init() {
-        let arguments = ProcessInfo.processInfo.arguments
-        let uiTesting = arguments.contains(SpendLiteApp.uiTestingArgument)
-        if uiTesting {
-            // A fake Face ID that answers instantly, so tests never wait for a real face.
-            let fake = FakeAuthenticator(succeeds: !arguments.contains(SpendLiteApp.authFailsArgument))
-            let defaults = UserDefaults(suiteName: "SpendLite.uiTesting.\(UUID().uuidString)") ?? .standard
-            if arguments.contains(SpendLiteApp.lockEnabledArgument) {
-                defaults.set(true, forKey: AppLock.enabledKey)
-            }
-            if !arguments.contains(SpendLiteApp.onboardingArgument) {
-                defaults.set(true, forKey: AppSettings.Key.hasCompletedOnboarding)
-            }
-            let notifications = FakeNotificationScheduler(grantsPermission: !arguments.contains(SpendLiteApp.notificationsDeniedArgument))
-            let purchases = FakePurchaseService(owns: arguments.contains(SpendLiteApp.proArgument))
-            container = AppContainer(inMemory: true, authenticator: fake, defaults: defaults,
-                                     notificationScheduler: notifications, purchases: purchases)
-        } else {
-            container = .live
-            UNUserNotificationCenter.current().delegate = NotificationPresenter.shared
-            // Lets Siri learn phrases with a category in them ("Add a Food expense in SpendLite").
-            SpendLiteShortcuts.updateAppShortcutParameters()
-        }
+        #if DEBUG
+        container = Self.uiTestingContainer() ?? Self.liveContainer()
+        #else
+        // Release builds have no test hooks: always the real data.
+        container = Self.liveContainer()
+        #endif
         // Preferences (currency, appearance) come from the container's store,
         // so UI tests never change the real settings.
         AppSettings.store = container.defaults
@@ -65,4 +49,34 @@ struct SpendLiteApp: App {
                 .preferredColorScheme(appearance.colorScheme)
         }
     }
+
+    private static func liveContainer() -> AppContainer {
+        ExpensesCSV.removeOldExports()
+        UNUserNotificationCenter.current().delegate = NotificationPresenter.shared
+        // Lets Siri learn phrases with a category in them ("Add a Food expense in SpendLite").
+        SpendLiteShortcuts.updateAppShortcutParameters()
+        return .live
+    }
+
+    #if DEBUG
+    /// Throwaway in-memory data and fakes when launched by UI tests; nil otherwise.
+    /// Debug builds only, so the switches never ship in the App Store app.
+    private static func uiTestingContainer() -> AppContainer? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard arguments.contains(uiTestingArgument) else { return nil }
+        // A fake Face ID that answers instantly, so tests never wait for a real face.
+        let fake = FakeAuthenticator(succeeds: !arguments.contains(authFailsArgument))
+        let defaults = UserDefaults(suiteName: "SpendLite.uiTesting.\(UUID().uuidString)") ?? .standard
+        if arguments.contains(lockEnabledArgument) {
+            defaults.set(true, forKey: AppLock.enabledKey)
+        }
+        if !arguments.contains(onboardingArgument) {
+            defaults.set(true, forKey: AppSettings.Key.hasCompletedOnboarding)
+        }
+        let notifications = FakeNotificationScheduler(grantsPermission: !arguments.contains(notificationsDeniedArgument))
+        let purchases = FakePurchaseService(owns: arguments.contains(proArgument))
+        return AppContainer(inMemory: true, authenticator: fake, defaults: defaults,
+                            notificationScheduler: notifications, purchases: purchases)
+    }
+    #endif
 }

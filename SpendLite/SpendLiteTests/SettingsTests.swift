@@ -77,9 +77,26 @@ struct SettingsTests {
         ("Coffee, large", "\"Coffee, large\""),
         ("The \"best\" pizza", "\"The \"\"best\"\" pizza\""),
         ("Two\nlines", "\"Two\nlines\""),
+        // Would run as formulas in Excel / Numbers.
+        ("=HYPERLINK(\"http://x.co\")", "\"'=HYPERLINK(\"\"http://x.co\"\")\""),
+        ("+1 coffee", "'+1 coffee"),
+        ("-5 refund", "'-5 refund"),
+        ("@SUM(A1)", "'@SUM(A1)"),
+        ("\t=1", "'\t=1"),
+        ("Coffee = 5", "Coffee = 5"), // only a leading sign matters
     ])
     func csvEscaping(input: String, expected: String) {
         #expect(ExpensesCSV.escape(input) == expected)
+    }
+
+    @Test func oldExportsAreRemoved() throws {
+        let folder = ExpensesCSV.exportFolder
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let file = folder.appendingPathComponent("SpendLite-expenses-2026-01-01.csv")
+        try "Date\n".write(to: file, atomically: true, encoding: .utf8)
+
+        ExpensesCSV.removeOldExports()
+        #expect(!FileManager.default.fileExists(atPath: file.path))
     }
 
     @Test func csvFileNameHasTheDate() {

@@ -28,6 +28,8 @@ nonisolated extension ExpenseCategory: AppEnum {
 struct AddExpenseIntent: AppIntent {
     static let title: LocalizedStringResource = "Add Expense"
     static let description = IntentDescription("Log a new expense in SpendLite.")
+    /// Your spending is private: Siri asks you to unlock the iPhone first.
+    static let authenticationPolicy: IntentAuthenticationPolicy = .requiresAuthentication
 
     @Parameter(
         title: "Amount",
@@ -71,6 +73,8 @@ struct AddExpenseIntent: AppIntent {
 struct BudgetStatusIntent: AppIntent {
     static let title: LocalizedStringResource = "Check Budget"
     static let description = IntentDescription("Hear how much of this month's budget is left.")
+    /// Your spending is private: Siri asks you to unlock the iPhone first.
+    static let authenticationPolicy: IntentAuthenticationPolicy = .requiresAuthentication
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog & ReturnsValue<Double> {
