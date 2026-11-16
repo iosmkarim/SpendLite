@@ -61,11 +61,9 @@ struct SettingsScreen: View {
         } message: {
             Text("How much do you want to spend each month?")
         }
-        .confirmationDialog(
-            deleteTitle,
-            isPresented: $showingDeleteConfirmation,
-            titleVisibility: .visible
-        ) {
+        // A centered alert (not an action sheet / popover) for a destructive, can't-undo action.
+        .alert(deleteTitle, isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) {}
             Button("Delete All Expenses", role: .destructive) {
                 viewModel.deleteAllExpenses()
             }
@@ -329,15 +327,6 @@ struct SettingsScreen: View {
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("settings.showOnboarding")
-
-            Link(destination: URL(string: "https://github.com/iosmkarim/SpendLite")!) {
-                SettingsRow(icon: "chevron.left.forwardslash.chevron.right", color: .black, title: "Source code") {
-                    Image(systemName: "arrow.up.right")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            .buttonStyle(.plain)
         }
         .listRowBackground(Color.formRowBackground)
     }
