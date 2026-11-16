@@ -34,12 +34,13 @@ struct TabShellView: View {
 
             // Insights
             makeTab(.insights, title: "Insights", systemImage: "chart.pie.fill", navTitle: "Insights") {
-                InsightsScreen(expense: container.expenses)
+                InsightsScreen(expense: container.expenses, categoryBudgets: container.categoryBudgets)
             }
 
             // Settings
             makeTab(.settings, title: "Settings", systemImage: "gearshape.fill", navTitle: "Settings") {
-                SettingsScreen(expenses: container.expenses, budget: container.budget, recurring: container.recurring)
+                SettingsScreen(expenses: container.expenses, budget: container.budget, recurring: container.recurring,
+                               categoryBudgets: container.categoryBudgets)
             }
         }
         .id(currencyCode)

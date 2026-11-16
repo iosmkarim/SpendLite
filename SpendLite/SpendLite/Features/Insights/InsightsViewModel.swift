@@ -11,15 +11,23 @@ final class InsightsViewModel: ObservableObject {
 
     @Published var period: InsightsPeriod = .thisMonth
     @Published private(set) var summary: InsightsSummary?
+    /// Category limits (Settings → Category budgets), shown on "This month".
+    @Published private(set) var categoryLimits: [ExpenseCategory: Double] = [:]
 
     private let now: () -> Date
     private let calendar: Calendar
     private let refreshTrigger = CurrentValueSubject<Void, Never>(())
     private var cancellables = Set<AnyCancellable>()
 
-    init(expenses: ExpenseRepository, now: @escaping () -> Date = { .now }, calendar: Calendar = .current) {
+    init(expenses: ExpenseRepository, categoryBudgets: CategoryBudgetRepository? = nil,
+         now: @escaping () -> Date = { .now }, calendar: Calendar = .current) {
         self.now = now
         self.calendar = calendar
+
+        categoryBudgets?.limitsPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.categoryLimits = $0 }
+            .store(in: &cancellables)
 
         expenses.expensesPublisher
             .combineLatest($period, refreshTrigger)
@@ -29,6 +37,11 @@ final class InsightsViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in self?.summary = $0 }
             .store(in: &cancellables)
+    }
+
+    /// Limits apply per calendar month, so they're only compared on "This month".
+    var limitsForCurrentPeriod: [ExpenseCategory: Double] {
+        period == .thisMonth ? categoryLimits : [:]
     }
 
     /// Recalculate with the current time (e.g. when the tab reappears on a new day).

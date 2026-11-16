@@ -25,10 +25,15 @@ struct SettingsScreen: View {
 
     private let expenses: ExpenseRepository
     private let recurring: RecurringExpenseRepository?
+    private let budget: BudgetRepository
+    private let categoryBudgets: CategoryBudgetRepository?
 
-    init(expenses: ExpenseRepository, budget: BudgetRepository, recurring: RecurringExpenseRepository? = nil) {
+    init(expenses: ExpenseRepository, budget: BudgetRepository, recurring: RecurringExpenseRepository? = nil,
+         categoryBudgets: CategoryBudgetRepository? = nil) {
         self.expenses = expenses
         self.recurring = recurring
+        self.budget = budget
+        self.categoryBudgets = categoryBudgets
         _viewModel = StateObject(wrappedValue: SettingsViewModel(expenses: expenses, budget: budget))
     }
 
@@ -99,6 +104,15 @@ struct SettingsScreen: View {
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("settings.budget")
+
+            if let categoryBudgets {
+                NavigationLink {
+                    CategoryBudgetsScreen(expenses: expenses, budget: budget, categoryBudgets: categoryBudgets)
+                } label: {
+                    SettingsRow(icon: "chart.bar.fill", color: .pink, title: "Category budgets") { EmptyView() }
+                }
+                .accessibilityIdentifier("settings.categoryBudgets")
+            }
 
             if let recurring {
                 NavigationLink {

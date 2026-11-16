@@ -19,6 +19,8 @@ final class AppContainer {
     let coreData: CoreDataStack
     let expenses: ExpenseRepository
     let budget: BudgetRepository
+    /// Optional per-category monthly limits (Settings → Category budgets).
+    let categoryBudgets: CategoryBudgetRepository
     let recurring: RecurringExpenseRepository
     /// Keeps the Home Screen widget in sync. Nil for in-memory containers (tests, previews)
     /// so they never overwrite what the real widget shows.
@@ -44,6 +46,7 @@ final class AppContainer {
             : .standard)
         self.defaults = defaults
         self.budget = UserDefaultsBudgetRepository(defaults: defaults)
+        self.categoryBudgets = UserDefaultsCategoryBudgetRepository(defaults: defaults)
         self.widgetSync = inMemory ? nil : WidgetSync(expenses: expenses, budget: budget)
         self.appLock = AppLock(store: defaults, authenticator: authenticator)
         self.notifications = NotificationManager(

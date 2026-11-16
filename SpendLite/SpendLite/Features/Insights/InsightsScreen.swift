@@ -13,8 +13,8 @@ struct InsightsScreen: View {
     @StateObject private var viewModel: InsightsViewModel
     @EnvironmentObject private var nav: NavCoordinator
 
-    init(expense: ExpenseRepository) {
-        _viewModel = StateObject(wrappedValue: InsightsViewModel(expenses: expense))
+    init(expense: ExpenseRepository, categoryBudgets: CategoryBudgetRepository? = nil) {
+        _viewModel = StateObject(wrappedValue: InsightsViewModel(expenses: expense, categoryBudgets: categoryBudgets))
     }
 
     var body: some View {
@@ -38,7 +38,7 @@ struct InsightsScreen: View {
                             comparisonLabel: viewModel.comparisonLabel,
                             averagePerDay: viewModel.averagePerDay
                         )
-                        CategoriesCard(summary: summary) { category in
+                        CategoriesCard(summary: summary, limits: viewModel.limitsForCurrentPeriod) { category in
                             nav.goToTransactions(category: category)
                         }
                         TrendCard(summary: summary)
@@ -159,6 +159,7 @@ private struct Stat: View {
 
 private struct CategoriesCard: View {
     let summary: InsightsSummary
+    let limits: [ExpenseCategory: Double]
     let onSelect: (ExpenseCategory) -> Void
 
     var body: some View {
@@ -191,7 +192,7 @@ private struct CategoriesCard: View {
             VStack(spacing: 4) {
                 ForEach(summary.categories) { item in
                     Button { onSelect(item.category) } label: {
-                        CategoryRow(item: item)
+                        CategoryRow(item: item, limit: limits[item.category])
                     }
                     .buttonStyle(.pressableCard)
                     .accessibilityHint("Shows these transactions")
@@ -206,9 +207,28 @@ private struct CategoriesCard: View {
 
 private struct CategoryRow: View {
     let item: InsightsSummary.CategoryShare
+    /// The category's monthly limit, if one is set (only passed on "This month").
+    var limit: Double? = nil
+
+    /// Against the limit when there is one, otherwise the share of all spending.
+    private var fraction: Double {
+        guard let limit, limit > 0 else { return item.share }
+        return item.total / limit
+    }
 
     private var percent: String {
-        item.share.formatted(.percent.precision(.fractionLength(0)))
+        fraction.formatted(.percent.precision(.fractionLength(0)))
+    }
+
+    private var barColor: Color {
+        guard limit != nil else { return item.category.color }
+        if fraction > 1 { return .red }
+        return fraction >= 0.8 ? .orange : item.category.color
+    }
+
+    private var amountText: String {
+        guard let limit else { return item.total.asCurrency() }
+        return "\(item.total.asCurrency()) of \(limit.formatted(.currency(code: Currency.code).precision(.fractionLength(0))))"
     }
 
     var body: some View {
@@ -223,17 +243,19 @@ private struct CategoryRow: View {
                     Text(item.category.name)
                         .font(.subheadline.weight(.semibold))
                     Spacer()
-                    Text(item.total.asCurrency())
+                    Text(amountText)
                         .font(.subheadline.weight(.semibold))
                         .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
-                // Share of the total as a bar.
+                // Against the limit if there is one, otherwise share of the total.
                 GeometryReader { proxy in
                     ZStack(alignment: .leading) {
                         Capsule().fill(Color.insetBackground)
                         Capsule()
-                            .fill(item.category.color)
-                            .frame(width: max(4, proxy.size.width * item.share))
+                            .fill(barColor)
+                            .frame(width: max(4, proxy.size.width * min(1, fraction)))
                     }
                 }
                 .frame(height: 6)
@@ -241,7 +263,7 @@ private struct CategoryRow: View {
 
             Text(percent)
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(limit != nil && fraction > 1 ? Color.red : Color.secondary)
                 .monospacedDigit()
                 .frame(minWidth: 36, alignment: .trailing)
 
@@ -252,7 +274,7 @@ private struct CategoryRow: View {
         .padding(.vertical, 8)
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(item.category.name), \(item.total.asCurrency()), \(percent) of spending, \(item.count) \(item.count == 1 ? "transaction" : "transactions")")
+        .accessibilityLabel("\(item.category.name), \(amountText), \(percent) \(limit == nil ? "of spending" : "of its limit"), \(item.count) \(item.count == 1 ? "transaction" : "transactions")")
     }
 }
 
