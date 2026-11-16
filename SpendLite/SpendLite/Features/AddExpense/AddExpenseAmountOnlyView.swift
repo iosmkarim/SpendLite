@@ -3,6 +3,8 @@ import PhotosUI
 
 struct AddExpenseAmountOnlyView: View {
     @StateObject private var viewModel: AddExpenseViewModel
+    @EnvironmentObject private var pro: ProStore
+    @State private var showingPaywall = false
 
     @Environment(\.dismiss) private var dismiss
     @State private var amountText: String = ""
@@ -113,7 +115,28 @@ struct AddExpenseAmountOnlyView: View {
         }
     }
 
+    @ViewBuilder
     private var scanSection: some View {
+        if pro.isPro {
+            unlockedScanSection
+        } else {
+            // Pro feature: same row, with a badge, opening the upgrade screen.
+            Section {
+                Button { showingPaywall = true } label: {
+                    HStack {
+                        Label("Scan a receipt", systemImage: "doc.text.viewfinder")
+                        Spacer()
+                        ProBadge()
+                    }
+                    .contentShape(Rectangle())
+                }
+                .accessibilityIdentifier("addExpense.scanReceipt")
+            }
+            .listRowBackground(Color.formRowBackground)
+        }
+    }
+
+    private var unlockedScanSection: some View {
         Section {
             Menu {
                 if DocumentScannerView.isSupported {
@@ -288,7 +311,25 @@ struct AddExpenseAmountOnlyView: View {
                 }
                 .listRowBackground(Color.formRowBackground)
 
-                if viewModel.canRepeat {
+                if viewModel.canRepeat && pro.recurringLimitReached(currentCount: viewModel.recurringCount) {
+                    // Free users have used their recurring expenses: offer Pro instead.
+                    Section {
+                        Button { showingPaywall = true } label: {
+                            HStack {
+                                Label("Repeat", systemImage: "arrow.triangle.2.circlepath")
+                                Spacer()
+                                ProBadge()
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .accessibilityIdentifier("addExpense.repeatLocked")
+                    } header: {
+                        Text("Repeat")
+                    } footer: {
+                        Text("You've used all \(ProStore.freeRecurringLimit) free recurring expenses. SpendLite Pro makes them unlimited.")
+                    }
+                    .listRowBackground(Color.formRowBackground)
+                } else if viewModel.canRepeat {
                     Section {
                         Picker(selection: $repeatFrequency) {
                             Text("Never").tag(RecurringExpense.Frequency?.none)
@@ -346,6 +387,11 @@ struct AddExpenseAmountOnlyView: View {
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
+        .sheet(isPresented: $showingPaywall) { ProPaywallView(pro: pro) }
+        // Bought Pro while the form was open with "Repeat" preset (e.g. from the Recurring list)? Fine.
+        .onAppear {
+            if pro.recurringLimitReached(currentCount: viewModel.recurringCount) { repeatFrequency = nil }
+        }
         .photosPicker(isPresented: $showingPhotoPicker, selection: $photoItem, matching: .images)
         .onChange(of: photoItem) { _, item in
             guard let item else { return }
@@ -377,4 +423,5 @@ struct AddExpenseAmountOnlyView: View {
     NavigationStack {
         AddExpenseAmountOnlyView(expenses: AppContainer(inMemory: true).expenses, isPresentedAsSheet: true)
     }
+    .environmentObject(AppContainer(inMemory: true).pro)
 }

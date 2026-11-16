@@ -47,6 +47,10 @@ struct TabShellView: View {
         .environmentObject(nav)
         .environmentObject(container.appLock)
         .environmentObject(container.notifications)
+        .environmentObject(container.pro)
+        .sheet(isPresented: $nav.showPaywall) {
+            ProPaywallView(pro: container.pro)
+        }
         // Lock screen on top of everything while locked; a plain cover in the app switcher.
         .overlay { AppLockGate(appLock: container.appLock, scenePhase: scenePhase) }
         // First launch: welcome → budget → start. Finishing sets the flag, which closes this.
@@ -66,6 +70,7 @@ struct TabShellView: View {
             guard phase == .active else { return }
             // Keep reminders current (e.g. skip tonight's if something was logged by Siri).
             Task { await container.notifications.update() }
+            Task { await container.pro.refresh() }
             if container.appLock.isLocked { Task { await container.appLock.unlock() } }
             generation = container.recurring.generateDueExpenses(now: .now)
                 .sink(receiveCompletion: { _ in }, receiveValue: { _ in })

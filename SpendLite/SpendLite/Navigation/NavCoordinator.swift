@@ -29,9 +29,16 @@ final class NavCoordinator: ObservableObject {
     /// Set when the widget's "Add expense" opens the app; Home shows the form and clears it.
     @Published var addExpenseRequested = false
 
-    /// Handles links from the widget: spendlite://add and spendlite://home.
+    /// Shows the SpendLite Pro screen (from a locked feature, Settings, or the widget).
+    @Published var showPaywall = false
+
+    /// Handles links from the widget: spendlite://add, spendlite://home and spendlite://pro.
     func handle(_ url: URL) {
         guard url.scheme == "spendlite" else { return }
+        if url.host == "pro" {
+            showPaywall = true
+            return
+        }
         selectedTab = .home
         if url.host == "add" {
             addExpenseRequested = true

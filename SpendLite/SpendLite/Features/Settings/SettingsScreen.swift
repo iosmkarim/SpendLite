@@ -10,6 +10,8 @@ struct SettingsScreen: View {
     @StateObject private var viewModel: SettingsViewModel
     @EnvironmentObject private var appLock: AppLock
     @EnvironmentObject private var notifications: NotificationManager
+    @EnvironmentObject private var pro: ProStore
+    @EnvironmentObject private var nav: NavCoordinator
     @Environment(\.openURL) private var openURL
     @State private var showingNotificationsDenied = false
     @State private var lockErrorMessage: String?
@@ -39,6 +41,7 @@ struct SettingsScreen: View {
 
     var body: some View {
         Form {
+            proSection
             budgetSection
             preferencesSection
             notificationsSection
@@ -89,6 +92,41 @@ struct SettingsScreen: View {
     }
 
     // MARK: - Sections
+
+    private var proSection: some View {
+        Section {
+            Button { nav.showPaywall = true } label: {
+                SettingsRow(icon: "sparkles", color: .brand, title: "SpendLite Pro") {
+                    if pro.isPro {
+                        Label("Unlocked", systemImage: "checkmark.seal.fill")
+                            .labelStyle(.titleAndIcon)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.green)
+                    } else {
+                        Text(pro.price.map { "Upgrade · \($0)" } ?? "Upgrade")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color.brand)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("settings.pro")
+
+            if !pro.isPro {
+                Button("Restore Purchases") { Task { await pro.restore() } }
+                    .disabled(pro.isWorking)
+                    .accessibilityIdentifier("settings.restore")
+            }
+        } footer: {
+            if let message = pro.message {
+                Text(message)
+            } else if !pro.isPro {
+                Text("Receipt scan, unlimited recurring expenses and more widgets. One-time purchase.")
+            }
+        }
+        .listRowBackground(Color.formRowBackground)
+        .task { await pro.refresh() }
+    }
 
     private var budgetSection: some View {
         Section {
@@ -353,4 +391,6 @@ private struct SettingsRow<Trailing: View>: View {
     }
     .environmentObject(AppLock(store: UserDefaults(suiteName: "preview")!, authenticator: FakeAuthenticator(succeeds: true)))
     .environmentObject(AppContainer.preview().notifications)
+    .environmentObject(AppContainer.preview().pro)
+    .environmentObject(NavCoordinator())
 }

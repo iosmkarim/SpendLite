@@ -24,6 +24,11 @@ nonisolated struct WidgetSnapshot: Codable, Equatable, Sendable {
     /// Newest first, at most a few.
     var recent: [Expense]
     var updatedAt: Date
+    /// SpendLite Pro unlocks the medium and Lock Screen widgets. Optional so snapshots
+    /// written before Pro existed still decode (treated as not Pro).
+    var isPro: Bool? = nil
+
+    var hasPro: Bool { isPro == true }
 
     // MARK: - Derived (same rules as Home's budget card)
 
@@ -64,7 +69,8 @@ nonisolated struct WidgetSnapshot: Codable, Equatable, Sendable {
             Expense(id: UUID(), title: "Coffee", amount: 4.75, date: .now.addingTimeInterval(-3600 * 5)),
             Expense(id: UUID(), title: "Uber", amount: 18.20, date: .now.addingTimeInterval(-3600 * 26)),
         ],
-        updatedAt: .now
+        updatedAt: .now,
+        isPro: true // the gallery shows every size as it looks with Pro
     )
 }
 
@@ -79,6 +85,8 @@ nonisolated enum WidgetSnapshotStore {
     static let addExpenseURL = URL(string: "spendlite://add")!
     /// Opens the app on Home ("spendlite://home").
     static let homeURL = URL(string: "spendlite://home")!
+    /// Opens the SpendLite Pro screen ("spendlite://pro").
+    static let proURL = URL(string: "spendlite://pro")!
 
     static var defaults: UserDefaults? { UserDefaults(suiteName: appGroup) }
 

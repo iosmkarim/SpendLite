@@ -12,7 +12,7 @@ final class ReceiptScanUITests: XCTestCase {
     @MainActor
     func testScanningFillsTheFormAndSaves() {
         let app = XCUIApplication()
-        app.launchArguments += ["-ui-testing"]
+        app.launchArguments += ["-ui-testing", "-ui-testing-pro"] // receipt scan is a Pro feature
         app.launch()
 
         app.tabBars.buttons["Transactions"].tap()
@@ -40,7 +40,7 @@ final class ReceiptScanUITests: XCTestCase {
     @MainActor
     func testScanIsNotOfferedWhenEditing() {
         let app = XCUIApplication()
-        app.launchArguments += ["-ui-testing"]
+        app.launchArguments += ["-ui-testing", "-ui-testing-pro"] // receipt scan is a Pro feature
         app.launch()
         app.tabBars.buttons["Transactions"].tap()
         app.buttons["transactions.add"].tap()

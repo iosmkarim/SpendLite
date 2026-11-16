@@ -25,10 +25,18 @@ final class AddExpenseViewModel: ObservableObject {
     /// Repeating is offered only when adding (an edit changes just that one expense).
     var canRepeat: Bool { recurring != nil && !isEditing }
 
+    /// How many recurring expenses exist (free users can have `ProStore.freeRecurringLimit`).
+    @Published private(set) var recurringCount = 0
+
     init(expenses: ExpenseRepository, editing: ExpenseItem? = nil, recurring: RecurringExpenseRepository? = nil) {
         self.expenses = expenses
         self.editing = editing
         self.recurring = recurring
+        recurring?.recurringPublisher
+            .map(\.count)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.recurringCount = $0 }
+            .store(in: &cancellables)
     }
 
     /// Saves the expense (adds, or updates `editing`). Calls `onSuccess` on the main thread once stored.

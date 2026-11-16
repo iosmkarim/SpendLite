@@ -12,6 +12,16 @@ struct RecurringListScreen: View {
     @State private var editing: RecurringExpense?
     @State private var showingAdd = false
     @State private var pendingDelete: RecurringExpense?
+    @State private var showingPaywall = false
+    @EnvironmentObject private var pro: ProStore
+
+    private func addTapped() {
+        if pro.recurringLimitReached(currentCount: viewModel.items.count) {
+            showingPaywall = true
+        } else {
+            showingAdd = true
+        }
+    }
 
     private let expenses: ExpenseRepository
 
@@ -33,7 +43,7 @@ struct RecurringListScreen: View {
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button { showingAdd = true } label: {
+                Button(action: addTapped) {
                     Label("Add recurring expense", systemImage: "plus")
                 }
                 .accessibilityIdentifier("recurring.add")
@@ -50,6 +60,7 @@ struct RecurringListScreen: View {
             }
             .presentationDragIndicator(.visible)
         }
+        .sheet(isPresented: $showingPaywall) { ProPaywallView(pro: pro) }
         .sheet(item: $editing) { item in
             NavigationStack {
                 RecurringEditView(item: item, nextDate: viewModel.nextDate(of: item)) { updated in
@@ -100,7 +111,8 @@ struct RecurringListScreen: View {
             SummaryCard(
                 monthlyTotal: viewModel.monthlyTotal,
                 activeCount: viewModel.activeCount,
-                pausedCount: viewModel.pausedCount
+                pausedCount: viewModel.pausedCount,
+                freeSlotsLeft: pro.isPro ? nil : max(0, ProStore.freeRecurringLimit - viewModel.items.count)
             )
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 12, trailing: 16))
             .listRowSeparator(.hidden)
@@ -153,7 +165,7 @@ struct RecurringListScreen: View {
         } description: {
             Text("Add rent, subscriptions or bills once and they're added automatically every week, month or year.")
         } actions: {
-            Button("Add Recurring Expense") { showingAdd = true }
+            Button("Add Recurring Expense", action: addTapped)
                 .buttonStyle(.borderedProminent)
         }
     }
@@ -165,6 +177,8 @@ private struct SummaryCard: View {
     let monthlyTotal: Double
     let activeCount: Int
     let pausedCount: Int
+    /// For free users: how many more they can add (nil with Pro).
+    let freeSlotsLeft: Int?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -176,6 +190,17 @@ private struct SummaryCard: View {
             Text(countsText)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+            if let freeSlotsLeft {
+                HStack(spacing: 6) {
+                    ProBadge()
+                    Text(freeSlotsLeft == 0
+                         ? "Free limit reached. Pro makes recurring expenses unlimited."
+                         : "\(freeSlotsLeft) of \(ProStore.freeRecurringLimit) free recurring expenses left")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.top, 4)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
@@ -247,4 +272,5 @@ private struct RecurringRow: View {
     NavigationStack {
         RecurringListScreen(recurring: AppContainer.preview().recurring, expenses: AppContainer.preview().expenses)
     }
+    .environmentObject(AppContainer(inMemory: true).pro)
 }
