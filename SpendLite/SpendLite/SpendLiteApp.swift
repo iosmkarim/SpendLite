@@ -21,6 +21,8 @@ struct SpendLiteApp: App {
     static let onboardingArgument = "-ui-testing-onboarding"
     /// UI tests only: pretend notification permission was denied.
     static let notificationsDeniedArgument = "-ui-testing-notifications-denied"
+    /// UI tests only: start with SpendLite Pro already bought.
+    static let proArgument = "-ui-testing-pro"
 
     private let container: AppContainer
 
@@ -40,7 +42,9 @@ struct SpendLiteApp: App {
                 defaults.set(true, forKey: AppSettings.Key.hasCompletedOnboarding)
             }
             let notifications = FakeNotificationScheduler(grantsPermission: !arguments.contains(SpendLiteApp.notificationsDeniedArgument))
-            container = AppContainer(inMemory: true, authenticator: fake, defaults: defaults, notificationScheduler: notifications)
+            let purchases = FakePurchaseService(owns: arguments.contains(SpendLiteApp.proArgument))
+            container = AppContainer(inMemory: true, authenticator: fake, defaults: defaults,
+                                     notificationScheduler: notifications, purchases: purchases)
         } else {
             container = .live
             UNUserNotificationCenter.current().delegate = NotificationPresenter.shared

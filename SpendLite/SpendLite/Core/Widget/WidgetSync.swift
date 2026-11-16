@@ -16,6 +16,8 @@ final class WidgetSync {
     private let calendar: Calendar
     private let reloadWidget: () -> Void
     private var latest: (expenses: [ExpenseItem], budget: Double)?
+    /// Set by ProStore; the medium and Lock Screen widgets need Pro.
+    var isPro = false { didSet { if isPro != oldValue { write() } } }
     private var cancellables = Set<AnyCancellable>()
 
     init(
@@ -62,7 +64,8 @@ final class WidgetSync {
             monthlyBudget: latest.budget,
             currencyCode: Currency.code,
             now: now(),
-            calendar: calendar
+            calendar: calendar,
+            isPro: isPro
         )
         WidgetSnapshotStore.save(snapshot, to: defaults)
         reloadWidget()
@@ -74,7 +77,8 @@ final class WidgetSync {
         monthlyBudget: Double,
         currencyCode: String,
         now: Date,
-        calendar: Calendar
+        calendar: Calendar,
+        isPro: Bool = false
     ) -> WidgetSnapshot {
         let summary = HomeSummary.forMonth(containing: now, expenses: expenses, monthlyBudget: monthlyBudget, calendar: calendar)
         let recent = expenses
@@ -89,7 +93,8 @@ final class WidgetSync {
             spentThisMonth: summary.totalSpent,
             currencyCode: currencyCode,
             recent: Array(recent),
-            updatedAt: now
+            updatedAt: now,
+            isPro: isPro
         )
     }
 }

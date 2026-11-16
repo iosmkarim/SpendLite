@@ -1,0 +1,38 @@
+{
+  "identifier" : "5F3C1A2B",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : true,
+      "internalID" : "6739571001",
+      "localizations" : [
+        {
+          "description" : "Receipt scan, unlimited recurring expenses, and the medium and Lock Screen widgets.",
+          "displayName" : "SpendLite Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.iosmkarim.SpendLite.pro",
+      "referenceName" : "SpendLite Pro",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

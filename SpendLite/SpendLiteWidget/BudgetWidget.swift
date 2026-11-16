@@ -60,6 +60,16 @@ struct BudgetWidgetView: View {
     let entry: BudgetEntry
 
     var body: some View {
+        // The small widget is free; the others are part of SpendLite Pro.
+        if family != .systemSmall && !entry.snapshot.hasPro {
+            ProLockedView(family: family)
+        } else {
+            content
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
         switch family {
         case .systemMedium: MediumView(entry: entry)
         case .accessoryCircular: CircularView(entry: entry)
@@ -248,6 +258,51 @@ private struct InlineView: View {
 
     var body: some View {
         Text("\(f.headline) \(f.caption) in \(f.monthShort)")
+    }
+}
+
+/// Shown instead of a Pro-only size until SpendLite Pro is bought. Tapping opens the Pro screen.
+private struct ProLockedView: View {
+    let family: WidgetFamily
+
+    var body: some View {
+        Group {
+            switch family {
+            case .accessoryCircular:
+                ZStack {
+                    AccessoryWidgetBackground()
+                    Image(systemName: "lock.fill")
+                }
+            case .accessoryRectangular:
+                VStack(alignment: .leading, spacing: 2) {
+                    Label("SpendLite Pro", systemImage: "sparkles")
+                        .font(.headline)
+                        .widgetAccentable()
+                    Text("Unlock Lock Screen widgets")
+                        .font(.caption)
+                }
+            case .accessoryInline:
+                Label("SpendLite Pro", systemImage: "lock.fill")
+            default:
+                HStack(spacing: 14) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 50, height: 50)
+                        .background(WidgetPalette.brand.gradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("SpendLite Pro")
+                            .font(.headline)
+                        Text("Unlock this widget, receipt scan and unlimited recurring expenses.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(3)
+                    }
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+        .widgetURL(WidgetSnapshotStore.proURL)
     }
 }
 
