@@ -17,6 +17,7 @@ enum AppSettings {
         /// ISO currency code, or missing for "Automatic" (follow the device region).
         static let currencyCode = "currencyCode"
         static let appearance = "appearance"
+        static let hasCompletedOnboarding = "hasCompletedOnboarding"
     }
 }
 

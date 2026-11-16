@@ -18,6 +18,7 @@ struct TabShellView: View {
     /// Amounts are formatted with `Currency.code`; rebuilding the tabs when it changes
     /// updates every amount on screen. The selected tab lives in `nav`, so it's kept.
     @AppStorage(AppSettings.Key.currencyCode) private var currencyCode: String = ""
+    @AppStorage(AppSettings.Key.hasCompletedOnboarding) private var hasCompletedOnboarding = false
 
     var body: some View {
         TabView(selection: $nav.selectedTab) {
@@ -46,6 +47,13 @@ struct TabShellView: View {
         .environmentObject(container.appLock)
         // Lock screen on top of everything while locked; a plain cover in the app switcher.
         .overlay { AppLockGate(appLock: container.appLock, scenePhase: scenePhase) }
+        // First launch: welcome → budget → start. Finishing sets the flag, which closes this.
+        .fullScreenCover(isPresented: .constant(!hasCompletedOnboarding)) {
+            OnboardingView(budget: container.budget, expenses: container.expenses, defaults: container.defaults) {
+                nav.selectedTab = .home
+            }
+            .defaultAppStorage(container.defaults)
+        }
         .onOpenURL { nav.handle($0) }
         .onChange(of: currencyCode) { _, _ in container.widgetSync?.refresh() }
         // Add any recurring expenses that came due while the app was closed or in the background.

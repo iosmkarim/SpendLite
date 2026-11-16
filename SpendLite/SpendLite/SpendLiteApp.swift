@@ -16,6 +16,8 @@ struct SpendLiteApp: App {
     /// UI tests only: start with the lock turned on, and make Face ID succeed or fail.
     static let lockEnabledArgument = "-ui-testing-lock-enabled"
     static let authFailsArgument = "-ui-testing-auth-fails"
+    /// UI tests skip the welcome screens unless they pass this.
+    static let onboardingArgument = "-ui-testing-onboarding"
 
     private let container: AppContainer
 
@@ -30,6 +32,9 @@ struct SpendLiteApp: App {
             let defaults = UserDefaults(suiteName: "SpendLite.uiTesting.\(UUID().uuidString)") ?? .standard
             if arguments.contains(SpendLiteApp.lockEnabledArgument) {
                 defaults.set(true, forKey: AppLock.enabledKey)
+            }
+            if !arguments.contains(SpendLiteApp.onboardingArgument) {
+                defaults.set(true, forKey: AppSettings.Key.hasCompletedOnboarding)
             }
             container = AppContainer(inMemory: true, authenticator: fake, defaults: defaults)
         } else {

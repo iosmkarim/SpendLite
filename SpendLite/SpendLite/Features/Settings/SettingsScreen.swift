@@ -14,6 +14,7 @@ struct SettingsScreen: View {
     /// "" means Automatic (follow the device region).
     @AppStorage(AppSettings.Key.currencyCode) private var currencyCode: String = ""
     @AppStorage(AppSettings.Key.appearance) private var appearance: Appearance = .system
+    @AppStorage(AppSettings.Key.hasCompletedOnboarding) private var hasCompletedOnboarding = true
 
     @State private var showingBudgetEditor = false
     @State private var budgetText = ""
@@ -211,6 +212,14 @@ struct SettingsScreen: View {
                 Text(Self.versionText)
                     .foregroundStyle(.secondary)
             }
+            Button {
+                hasCompletedOnboarding = false
+            } label: {
+                SettingsRow(icon: "hand.wave.fill", color: .brand, title: "Show welcome screens") { EmptyView() }
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("settings.showOnboarding")
+
             Link(destination: URL(string: "https://github.com/iosmkarim/SpendLite")!) {
                 SettingsRow(icon: "chevron.left.forwardslash.chevron.right", color: .black, title: "Source code") {
                     Image(systemName: "arrow.up.right")
