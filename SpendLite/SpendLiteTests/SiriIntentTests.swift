@@ -4,6 +4,7 @@
 //
 
 import Testing
+import AppIntents
 import Foundation
 @testable import SpendLite
 
@@ -116,5 +117,11 @@ struct SiriIntentTests {
 
         let reply = await handler.budgetReply()
         #expect(reply.spent == 600) // November's rent was added before answering
+    }
+
+    @Test func siriAsksToUnlockBeforeShowingOrAddingSpending() {
+        // Otherwise anyone holding a locked iPhone could hear the budget or add expenses.
+        #expect(BudgetStatusIntent.authenticationPolicy == .requiresAuthentication)
+        #expect(AddExpenseIntent.authenticationPolicy == .requiresAuthentication)
     }
 }

@@ -80,6 +80,9 @@ struct BudgetWidgetView: View {
     }
 }
 
+// Amounts and expense names are marked `.privacySensitive()`, so iOS hides them
+// on the Lock Screen (and in StandBy) until the iPhone is unlocked.
+
 /// Shared numbers for one entry.
 private struct Figures {
     let entry: BudgetEntry
@@ -125,6 +128,7 @@ private struct SmallView: View {
                 Spacer()
                 Ring(progress: f.progress, color: f.ringColor, lineWidth: 5)
                     .frame(width: 26, height: 26)
+                    .privacySensitive()
             }
             Spacer(minLength: 0)
             Text(f.headline)
@@ -132,12 +136,14 @@ private struct SmallView: View {
                 .foregroundStyle(f.isOver ? .red : .primary)
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
+                .privacySensitive()
             Text(f.caption)
                 .font(.subheadline)
                 .foregroundStyle(f.isOver ? .red : .secondary)
             Text("of \(f.money(f.snapshot.monthlyBudget))")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .privacySensitive()
         }
         .widgetURL(WidgetSnapshotStore.homeURL)
         .accessibilityElement(children: .ignore)
@@ -175,6 +181,7 @@ private struct MediumView: View {
                             .foregroundStyle(f.isOver ? .red : .secondary)
                     }
                 }
+                .privacySensitive()
                 Spacer(minLength: 0)
                 Link(destination: WidgetSnapshotStore.addExpenseURL) {
                     Label("Add expense", systemImage: "plus")
@@ -206,6 +213,7 @@ private struct MediumView: View {
                                 .font(.caption.weight(.semibold))
                                 .monospacedDigit()
                         }
+                        .privacySensitive()
                     }
                 }
                 Spacer(minLength: 0)
@@ -228,6 +236,7 @@ private struct CircularView: View {
                 .minimumScaleFactor(0.5)
         }
         .gaugeStyle(.accessoryCircularCapacity)
+        .privacySensitive()
         .widgetURL(WidgetSnapshotStore.homeURL)
         .accessibilityLabel("\(f.percentLabel) of budget spent")
     }
@@ -245,8 +254,10 @@ private struct RectangularView: View {
             Text("\(f.headline) \(f.caption)")
                 .font(.headline)
                 .minimumScaleFactor(0.6)
+                .privacySensitive()
             Gauge(value: f.progress) { EmptyView() }
                 .gaugeStyle(.accessoryLinearCapacity)
+                .privacySensitive()
         }
         .widgetURL(WidgetSnapshotStore.homeURL)
     }
@@ -258,6 +269,7 @@ private struct InlineView: View {
 
     var body: some View {
         Text("\(f.headline) \(f.caption) in \(f.monthShort)")
+            .privacySensitive()
     }
 }
 
