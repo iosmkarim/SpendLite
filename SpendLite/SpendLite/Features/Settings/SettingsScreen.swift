@@ -9,6 +9,9 @@ import SwiftUI
 struct SettingsScreen: View {
     @StateObject private var viewModel: SettingsViewModel
     @EnvironmentObject private var appLock: AppLock
+    @EnvironmentObject private var notifications: NotificationManager
+    @Environment(\.openURL) private var openURL
+    @State private var showingNotificationsDenied = false
     @State private var lockErrorMessage: String?
 
     /// "" means Automatic (follow the device region).
@@ -33,6 +36,7 @@ struct SettingsScreen: View {
         Form {
             budgetSection
             preferencesSection
+            notificationsSection
             privacySection
             dataSection
             aboutSection
@@ -138,6 +142,60 @@ struct SettingsScreen: View {
             .accessibilityIdentifier("settings.appearance")
         }
         .listRowBackground(Color.formRowBackground)
+    }
+
+    private var notificationsSection: some View {
+        Section {
+            Toggle(isOn: Binding(
+                get: { notifications.budgetAlertsEnabled },
+                set: { on in Task { if await notifications.setBudgetAlerts(on) != on { showingNotificationsDenied = true } } }
+            )) {
+                SettingsRow(icon: "bell.badge.fill", color: .red, title: "Budget alerts") { EmptyView() }
+            }
+            .accessibilityIdentifier("settings.budgetAlerts")
+
+            Toggle(isOn: Binding(
+                get: { notifications.dailyReminderEnabled },
+                set: { on in Task { if await notifications.setDailyReminder(on) != on { showingNotificationsDenied = true } } }
+            )) {
+                SettingsRow(icon: "clock.fill", color: .blue, title: "Daily reminder") { EmptyView() }
+            }
+            .accessibilityIdentifier("settings.dailyReminder")
+
+            if notifications.dailyReminderEnabled {
+                DatePicker(
+                    "Remind me at",
+                    selection: Binding(
+                        get: {
+                            Calendar.current.date(bySettingHour: notifications.reminderHour,
+                                                  minute: notifications.reminderMinute, second: 0, of: .now) ?? .now
+                        },
+                        set: { date in
+                            let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
+                            Task { await notifications.setReminderTime(hour: parts.hour ?? 20, minute: parts.minute ?? 0) }
+                        }
+                    ),
+                    displayedComponents: .hourAndMinute
+                )
+                .accessibilityIdentifier("settings.reminderTime")
+            }
+        } header: {
+            Text("Notifications")
+        } footer: {
+            Text(notifications.permissionDenied
+                 ? "Notifications are turned off for SpendLite in iOS Settings."
+                 : "Budget alerts tell you when you've used 80% of this month's budget and when you go over. The daily reminder is skipped on days you've already logged something.")
+        }
+        .listRowBackground(Color.formRowBackground)
+        .task { await notifications.refreshPermission() }
+        .alert("Notifications are off", isPresented: $showingNotificationsDenied) {
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openNotificationSettingsURLString) { openURL(url) }
+            }
+            Button("Not Now", role: .cancel) {}
+        } message: {
+            Text("To get budget alerts and reminders, allow notifications for SpendLite in iOS Settings.")
+        }
     }
 
     private var privacySection: some View {
@@ -280,4 +338,5 @@ private struct SettingsRow<Trailing: View>: View {
         SettingsScreen(expenses: AppContainer.preview().expenses, budget: AppContainer.preview().budget)
     }
     .environmentObject(AppLock(store: UserDefaults(suiteName: "preview")!, authenticator: FakeAuthenticator(succeeds: true)))
+    .environmentObject(AppContainer.preview().notifications)
 }
