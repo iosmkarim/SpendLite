@@ -134,7 +134,7 @@ struct TransactionsScreen: View {
             }
             .pickerStyle(.inline)
 
-            Section("Categories") {
+            Section(title: "Categories") {
                 ForEach(ExpenseCategory.allCases) { category in
                     Toggle(isOn: Binding(
                         get: { viewModel.filter.categories.contains(category) },
@@ -354,7 +354,7 @@ private struct SectionHeader: View {
                 .monospacedDigit()
         }
         .font(.subheadline.weight(.semibold))
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Color.primary)
         .textCase(nil)
         .padding(.vertical, 4)
         .accessibilityElement(children: .combine)

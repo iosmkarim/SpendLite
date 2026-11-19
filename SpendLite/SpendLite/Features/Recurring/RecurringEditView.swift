@@ -46,7 +46,7 @@ struct RecurringEditView: View {
 
     var body: some View {
         Form {
-            Section("Details") {
+            Section(title: "Details") {
                 TextField("Name", text: $title)
                     .accessibilityIdentifier("recurringEdit.title")
                 HStack {
@@ -72,7 +72,7 @@ struct RecurringEditView: View {
                 Toggle("Paused", isOn: $isPaused)
                     .accessibilityIdentifier("recurringEdit.paused")
             } header: {
-                Text("Schedule")
+                SectionTitle("Schedule")
             } footer: {
                 Text(isPaused
                      ? "Nothing is added while paused. Resuming continues from the next date."

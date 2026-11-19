@@ -161,7 +161,7 @@ struct SettingsScreen: View {
                 .accessibilityIdentifier("settings.recurring")
             }
         } header: {
-            Text("Budget")
+            SectionTitle("Budget")
         } footer: {
             Text("Home shows how much of your budget is left each month. Recurring expenses (rent, subscriptions) are added automatically.")
         }
@@ -169,7 +169,7 @@ struct SettingsScreen: View {
     }
 
     private var preferencesSection: some View {
-        Section("Preferences") {
+        Section(title: "Preferences") {
             Picker(selection: $currencyCode) {
                 Text("Automatic (\(Currency.automaticCode))").tag("")
                 ForEach(Currency.common, id: \.self) { code in
@@ -230,7 +230,7 @@ struct SettingsScreen: View {
                 .accessibilityIdentifier("settings.reminderTime")
             }
         } header: {
-            Text("Notifications")
+            SectionTitle("Notifications")
         } footer: {
             Text(notifications.permissionDenied
                  ? "Notifications are turned off for SpendLite in iOS Settings."
@@ -268,7 +268,7 @@ struct SettingsScreen: View {
             .disabled(appLock.isAuthenticating)
             .accessibilityIdentifier("settings.appLock")
         } header: {
-            Text("Privacy")
+            SectionTitle("Privacy")
         } footer: {
             Text("SpendLite asks for \(appLock.methodName) (or your passcode) each time you open it, and hides your amounts in the app switcher.")
         }
@@ -307,7 +307,7 @@ struct SettingsScreen: View {
             .disabled(viewModel.expenseCount == 0 || viewModel.isDeleting)
             .accessibilityIdentifier("settings.deleteAll")
         } header: {
-            Text("Data")
+            SectionTitle("Data")
         } footer: {
             Text("Your expenses are stored only on this iPhone.")
         }
@@ -315,7 +315,7 @@ struct SettingsScreen: View {
     }
 
     private var aboutSection: some View {
-        Section("About") {
+        Section(title: "About") {
             SettingsRow(icon: "info.circle", color: .gray, title: "Version") {
                 Text(Self.versionText)
                     .foregroundStyle(.secondary)
