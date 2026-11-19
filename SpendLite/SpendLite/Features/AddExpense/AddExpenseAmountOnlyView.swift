@@ -193,7 +193,7 @@ struct AddExpenseAmountOnlyView: View {
                 if !viewModel.isEditing {
                     scanSection
                 }
-                Section("Amount") {
+                Section(title: "Amount") {
                     HStack {
                         Text(Currency.symbol)
                             .foregroundStyle(.secondary)
@@ -210,7 +210,7 @@ struct AddExpenseAmountOnlyView: View {
                     }
                 }
                 .listRowBackground(Color.formRowBackground)
-                Section("Description") {
+                Section(title: "Description") {
                     ZStack(alignment: .topLeading) {
                         TextEditor(text: $descriptionText)
                             .frame(minHeight: 80)
@@ -232,7 +232,7 @@ struct AddExpenseAmountOnlyView: View {
                     .listRowInsets(EdgeInsets())
                 }
                 .listRowBackground(Color.formRowBackground)
-                Section("Category") {
+                Section(title: "Category") {
                     VStack(alignment: .leading, spacing: 12) {
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                             ForEach(categories) { category in
@@ -282,7 +282,7 @@ struct AddExpenseAmountOnlyView: View {
                 }
                 .listRowBackground(Color.formRowBackground)
                 
-                Section("Date") {
+                Section(title: "Date") {
                     Button {
                         withAnimation(.snappy) {
                             showDatePicker.toggle()
@@ -324,7 +324,7 @@ struct AddExpenseAmountOnlyView: View {
                         }
                         .accessibilityIdentifier("addExpense.repeatLocked")
                     } header: {
-                        Text("Repeat")
+                        SectionTitle("Repeat")
                     } footer: {
                         Text("You've used all \(ProStore.freeRecurringLimit) free recurring expenses. SpendLite Pro makes them unlimited.")
                     }
@@ -341,7 +341,7 @@ struct AddExpenseAmountOnlyView: View {
                         }
                         .accessibilityIdentifier("addExpense.repeat")
                     } header: {
-                        Text("Repeat")
+                        SectionTitle("Repeat")
                     } footer: {
                         if let repeatFrequency {
                             Text("Added automatically \(repeatFrequency.title.lowercased()) from \(selectedDate.formatted(.dateTime.month(.abbreviated).day())). Manage in Settings → Recurring expenses.")

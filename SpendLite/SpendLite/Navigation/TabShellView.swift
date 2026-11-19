@@ -87,10 +87,30 @@ struct TabShellView: View {
         NavigationStack {
             content()
                 .navigationTitle(navTitle)
+                .solidBottomEdge()
         }
         .tabItem {
             Label(title, systemImage: systemImage)
         }
         .tag(tab)
+    }
+}
+
+private extension View {
+    /// iOS 26's glass tab bar lets content show through it while scrolling.
+    /// A solid strip in the page color sits behind the bar (the bottom safe area),
+    /// so nothing scrolls visibly underneath it.
+    func solidBottomEdge() -> some View {
+        overlay {
+            GeometryReader { proxy in
+                VStack(spacing: 0) {
+                    Spacer(minLength: 0)
+                    Color.appBackground.frame(height: proxy.safeAreaInsets.bottom)
+                }
+                .ignoresSafeArea(.container, edges: .bottom)
+            }
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        }
     }
 }
